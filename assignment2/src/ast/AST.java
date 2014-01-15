@@ -3,12 +3,11 @@ package ast;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import visitor.DepthCountVisitor;
+import visitor.NodeCountVisitor;
 import visitor.PrettyPrintVisitor;
 import visitor.StructurePrintVisitor;
 import visitor.Visitor;
-
-
-
 
 public abstract class AST {
 	
@@ -25,5 +24,13 @@ public abstract class AST {
 		StringWriter out = new StringWriter();
 		this.accept(new StructurePrintVisitor(new PrintWriter(out)));
 		return out.toString();		
+	}
+	
+	public int nodeCount() {
+	  return this.accept(new NodeCountVisitor());
+	}
+	
+	public int depthCount() {
+	  return this.accept(new DepthCountVisitor());
 	}
 }
