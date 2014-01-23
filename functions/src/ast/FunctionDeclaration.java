@@ -6,13 +6,13 @@ public class FunctionDeclaration extends Statement {
   
   public final Type returnType;
   public final String name;
-  public final NodeList<AST> parameters;
+  public final FormalList parameters;
   public final NodeList<Statement> statements;
   public final Expression returnExpression;
 
   public FunctionDeclaration(Type returnType,
                              String name,
-                             NodeList<AST> parameters,
+                             FormalList parameters,
                              NodeList<Statement> statements,
                              Expression returnExpression) {
     

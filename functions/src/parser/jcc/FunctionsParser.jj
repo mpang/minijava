@@ -216,24 +216,20 @@ Type Type() : {
 	{ return new BooleanType(); }
 }
 
-Statement FunctionDeclaration() : {
-  	Type returnType;
-  	String name;
-	NodeList<AST> parameters = new NodeList<AST>();
-	Statement assign;
-	NodeList<Statement> statements = new NodeList<Statement>();
-	Expression returnExpression;
-	Type parameterType;
+FormalList FormalList() : {
+  	Type parameterType;
 	String parameterName;
-}
+  	NodeList<AST> parameters = new NodeList<AST>();}
 {
-	returnType = Type()
-	name = Identifier()
-	< LPAREN >
-	(		parameterType = Type()
+  	(
+		parameterType = Type()
 	  	parameterName = Identifier()
-	  	{	    	parameters.add(parameterType);
-	    	parameters.add(new IdentifierExp(parameterName));	  	}	  	(	    	< COMMA >
+	  	{
+	    	parameters.add(parameterType);
+	    	parameters.add(new IdentifierExp(parameterName));
+	  	}
+	  	(
+	    	< COMMA >
 	    	parameterType = Type()
 	  		parameterName = Identifier()
 	  		{
@@ -242,6 +238,21 @@ Statement FunctionDeclaration() : {
 	  		}
 	  	)*
 	)?
+	{ return new FormalList(parameters); }}
+
+Statement FunctionDeclaration() : {
+  	Type returnType;
+  	String name;
+	FormalList parameters;
+	Statement assign;
+	NodeList<Statement> statements = new NodeList<Statement>();
+	Expression returnExpression;
+}
+{
+	returnType = Type()
+	name = Identifier()
+	< LPAREN >
+	parameters = FormalList()
 	< RPAREN >
 	< LBRACE >
 	(		assign = Assign()
