@@ -31,6 +31,9 @@ SKIP :
 TOKEN : /* KEYWORDS */
 {	
 	< PRINT: "print" >
+|  	< INT: "int" >
+| 	< BOOLEAN: "boolean" >
+| 	< RETURN: "return" >
 }
 
 TOKEN : /* SEPARATORS and OPERATORS*/
@@ -46,6 +49,9 @@ TOKEN : /* SEPARATORS and OPERATORS*/
 |	< SMALLER: "<" >
 |	< NOT: "!" >
 | 	< SEMICOLON: ";" >
+| 	< COMMA: "," >
+| 	< LBRACE: "{" >
+| 	< RBRACE: "}" >
 }
 	
 TOKEN :
@@ -183,4 +189,12 @@ String Identifier() : {
 {
 	i = < IDENTIFIER >
 	{ return i.image; }
+}
+
+Type Type() : {
+}
+{
+  	< INT >
+  	{ return new IntegerType(); }|	< BOOLEAN >
+	{ return new BooleanType(); }
 }
