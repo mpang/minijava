@@ -180,9 +180,24 @@ Expression PrimaryExpression() : {
   	t = < INTEGER_LITERAL >
   	{ return new IntegerLiteral(t.image); }
 | 	i = Identifier()
-	{ return new IdentifierExp(i); }
+	e = PrimaryExpressionIdentifierBranch(i)
+	{ return e; }
 | 	"(" e = Expression() ")"
 	{ return e; }
+}
+
+Expression PrimaryExpressionIdentifierBranch(String i) : {
+  	Expression e;
+	NodeList<Expression> arguments = new NodeList<Expression>();}
+{	< LPAREN >
+	(	  	e = Expression()
+	  	{ arguments.add(e); }	  	(	  	  	< COMMA >
+	  	  	e = Expression()
+	  		{ arguments.add(e); }
+	  	)*
+	)?
+	< RPAREN >
+	{ return new FunctionCallExp(i, arguments); }|	{ return new IdentifierExp(i); }
 }
 
 String Identifier() : {
