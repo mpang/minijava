@@ -79,8 +79,10 @@ Statement Statement() : {
 	Statement s = null; //TODO: should not be null ever!
 }
 {	
-	s = Assign()	
-	{ return s; }		
+	s = Assign()
+	{ return s; }
+| 	s = FunctionDeclaration()
+	{ return s; }
 }
 Statement Assign() : {
 	String name;
@@ -197,4 +199,42 @@ Type Type() : {
   	< INT >
   	{ return new IntegerType(); }|	< BOOLEAN >
 	{ return new BooleanType(); }
+}
+
+Statement FunctionDeclaration() : {
+  	Type returnType;
+  	String name;
+	NodeList<AST> parameters = new NodeList<AST>();
+	Statement assign;
+	NodeList<Statement> statements = new NodeList<Statement>();
+	Expression returnExpression;
+	Type parameterType;
+	String parameterName;
+}
+{
+	returnType = Type()
+	name = Identifier()
+	< LPAREN >
+	(		parameterType = Type()
+	  	parameterName = Identifier()
+	  	{	    	parameters.add(parameterType);
+	    	parameters.add(new IdentifierExp(parameterName));	  	}	  	(	    	< COMMA >
+	    	parameterType = Type()
+	  		parameterName = Identifier()
+	  		{
+	      		parameters.add(parameterType);
+	      		parameters.add(new IdentifierExp(parameterName));
+	  		}
+	  	)*
+	)?
+	< RPAREN >
+	< LBRACE >
+	(		assign = Assign()
+		{ statements.add(assign); }
+	)*
+	< RETURN >
+	returnExpression = Expression()
+	< SEMICOLON >
+	< RBRACE >
+	{ return new FunctionDeclaration(returnType, name, parameters, statements, returnExpression); }
 }
