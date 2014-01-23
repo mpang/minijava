@@ -187,18 +187,27 @@ Expression PrimaryExpression() : {
 }
 
 Expression PrimaryExpressionIdentifierBranch(String i) : {
-  	Expression e;
-	NodeList<Expression> arguments = new NodeList<Expression>();}
+  	ExpressionList arguments;}
 {	< LPAREN >
-	(	  	e = Expression()
-	  	{ arguments.add(e); }	  	(	  	  	< COMMA >
-	  	  	e = Expression()
-	  		{ arguments.add(e); }
-	  	)*
-	)?
+	arguments = ExpressionList()
 	< RPAREN >
 	{ return new FunctionCallExp(i, arguments); }|	{ return new IdentifierExp(i); }
 }
+
+ExpressionList ExpressionList() : {
+  	Expression e;
+	NodeList<Expression> expressions = new NodeList<Expression>();}
+{
+ 	(
+	  	e = Expression()
+	  	{ expressions.add(e); }
+	  	(
+	  	  	< COMMA >
+	  	  	e = Expression()
+	  		{ expressions.add(e); }
+	  	)*
+	)?
+	{ return new ExpressionList(expressions); }}
 
 String Identifier() : {
 	Token i;
