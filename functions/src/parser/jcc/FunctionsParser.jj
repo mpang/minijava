@@ -30,21 +30,22 @@ SKIP :
 
 TOKEN : /* KEYWORDS */
 {	
-	<PRINT:		"print" >
+	< PRINT: "print" >
 }
 
 TOKEN : /* SEPARATORS and OPERATORS*/
-{	<LPAREN: "(">
-|	<RPAREN: ")">
-|	<ASSIGN: "=">
-|	<QUESTION:	 "?">
-|	<COLON:	 ":" >
-|	<PLUS:	 "+" >
-|	<MINUS:  "-" >
-|	<MULT:   "*" >
-|	<SMALLER:"<">
-|	<NOT:	 "!">
-| 	<SEMICOLON:	 ";" >
+{
+  	< LPAREN: "(" >
+|	< RPAREN: ")" >
+|	< ASSIGN: "=" >
+|	< QUESTION: "?" >
+|	< COLON: ":" >
+|	< PLUS: "+" >
+|	< MINUS: "-" >
+|	< MULT: "*" >
+|	< SMALLER: "<" >
+|	< NOT: "!" >
+| 	< SEMICOLON: ";" >
 }
 	
 TOKEN :
@@ -58,10 +59,13 @@ Program Program() : {
 	NodeList<Statement> ss = new NodeList<Statement>();
 	Statement s; 
 	Expression e;
-}{	( s=Statement()
-		{ ss.add(s); } 
+}{
+  	(
+  	  	s = Statement()
+	  	{ ss.add(s); } 
 	)*
-	< PRINT > e = Expression()
+	< PRINT >
+	e = Expression()
 	<EOF>
 	{ return new Program(ss, new Print(e)); }
 }
@@ -69,27 +73,32 @@ Statement Statement() : {
 	Statement s = null; //TODO: should not be null ever!
 }
 {	
-	s=Assign()	
+	s = Assign()	
 	{ return s; }		
 }
 Statement Assign() : {
 	String name;
 	Expression value;
 }
-{	name=Identifier() 
+{
+  	name = Identifier() 
 	"="
-	value=Expression() ";"
-		{return new Assign(name, value); }
+	value = Expression()
+	";"
+	{ return new Assign(name, value); }
 }
 
 
 Expression Expression() : {
 	Expression e, e2, e3;
 }
-{	e=CompExpression() 
-	( "?" e2 = Expression()
-	  ":" e3 = Expression()
-		{	e = new Conditional(e, e2, e3); }
+{  	e = CompExpression() 
+	(
+	  	"?"
+	  	e2 = Expression()
+	  	":"
+	  	e3 = Expression()
+		{ e = new Conditional(e, e2, e3); }
 	)?
 	{ return e; }
 }
@@ -98,8 +107,11 @@ Expression Expression() : {
 Expression CompExpression() : {
 	Expression e, e2;
 }
-{ 	e=AddExpression() 
-	( "<" e2=AddExpression() 
+{
+  	e = AddExpression() 
+	(
+	  	"<"
+	  	e2 = AddExpression() 
 		{ e = new LessThan(e, e2); }
 	)?
 	{ return e; }
@@ -109,25 +121,31 @@ Expression AddExpression() : {
 	Expression e, e2;
 	Token op;
 }
-{	e=MultExpression() 
-	( 	(op="+"|op="-") 
-		e2=MultExpression() 
-			{ if (op.image.equals("+"))
-				e=new Plus(e, e2);
-			  else
-			  	e=new Minus(e, e2);
-			}	
+{
+  	e = MultExpression() 
+	(
+	  	( op = "+" | op = "-" ) 
+		e2 = MultExpression() 
+		{
+		  	if (op.image.equals("+"))
+				e = new Plus(e, e2);
+			else
+			  	e = new Minus(e, e2);
+		}	
 	)*
 	{ return e; }
 }
 
 // For parsing anything with priority same or higher than *
-Expression MultExpression() :  {
+Expression MultExpression() : {
 	Expression e, e2;
 }
-{	e=NotExpression() 
-	(	"*" e2=NotExpression()
-			{ e = new Times(e, e2); } 
+{
+  	e = NotExpression() 
+	(
+		"*"
+	  	e2 = NotExpression()
+	  	{ e = new Times(e, e2); } 
 	)*
 	{ return e; }
 }
@@ -136,10 +154,12 @@ Expression MultExpression() :  {
 Expression NotExpression() : {
 	Expression e;
 }
-{ 	"!" e=NotExpression()
-		{ return new Not(e); }
-| 	e=PrimaryExpression()
-		{ return e; }
+{
+  	"!"
+  	e = NotExpression()
+	{ return new Not(e); }
+| 	e = PrimaryExpression()
+	{ return e; }
 }
         
 /* PrimaryExpression is the expression that has highest precedence.*/
@@ -148,15 +168,19 @@ Expression PrimaryExpression() : {
 	String i;
 	Expression e;
 }
-{ t=<INTEGER_LITERAL>					{ return new IntegerLiteral(t.image); }
-| i=Identifier()						{ return new IdentifierExp(i); }
-| "(" e=Expression() ")"				{ return e; }
+{
+  	t = < INTEGER_LITERAL >
+  	{ return new IntegerLiteral(t.image); }
+| 	i = Identifier()
+	{ return new IdentifierExp(i); }
+| 	"(" e = Expression() ")"
+	{ return e; }
 }
 
 String Identifier() : {
 	Token i;
 }
 {
-	i = <IDENTIFIER>
+	i = < IDENTIFIER >
 	{ return i.image; }
 }
