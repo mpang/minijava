@@ -13,6 +13,10 @@ import ast.Assign;
 import ast.BooleanType;
 import ast.Conditional;
 import ast.Expression;
+import ast.ExpressionList;
+import ast.FormalList;
+import ast.FunctionCallExp;
+import ast.FunctionDeclaration;
 import ast.IdentifierExp;
 import ast.IntegerLiteral;
 import ast.IntegerType;
@@ -26,7 +30,6 @@ import ast.Program;
 import ast.Times;
 import ast.Type;
 import ast.UnknownType;
-
 import ir.frame.Access;
 import ir.frame.Frame;
 import ir.temp.Label;
@@ -36,7 +39,6 @@ import ir.tree.IRStm;
 import ir.tree.TEMP;
 import ir.tree.BINOP.Op;
 import ir.tree.CJUMP.RelOp;
-
 import translate.Fragments;
 import translate.ProcFragment;
 import translate.Translator;
@@ -224,4 +226,24 @@ public class TranslateVisitor implements Visitor<TRExp> {
 				CMOVE(RelOp.EQ, c.unEx(), TRUE, v, t.unEx())),
 				v));
 	}
+
+  @Override
+  public TRExp visit(FunctionDeclaration n) {
+    throw new Error("Not implemented");
+  }
+
+  @Override
+  public TRExp visit(FunctionCallExp n) {
+    throw new Error("Not implemented");
+  }
+
+  @Override
+  public TRExp visit(FormalList n) {
+    throw new Error("Not implemented");
+  }
+
+  @Override
+  public TRExp visit(ExpressionList n) {
+    throw new Error("Not implemented");
+  }
 }

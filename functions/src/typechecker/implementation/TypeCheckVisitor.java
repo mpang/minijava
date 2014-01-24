@@ -9,6 +9,10 @@ import ast.Assign;
 import ast.BooleanType;
 import ast.Conditional;
 import ast.Expression;
+import ast.ExpressionList;
+import ast.FormalList;
+import ast.FunctionCallExp;
+import ast.FunctionDeclaration;
 import ast.IdentifierExp;
 import ast.IntegerLiteral;
 import ast.IntegerType;
@@ -22,7 +26,6 @@ import ast.Program;
 import ast.Times;
 import ast.Type;
 import ast.UnknownType;
-
 import typechecker.ErrorReport;
 import util.ImpTable;
 import visitor.Visitor;
@@ -199,4 +202,23 @@ public class TypeCheckVisitor implements Visitor<Type> {
 		return n.getType(); 
 	}
 
+  @Override
+  public Type visit(FunctionDeclaration n) {
+    throw new Error("Not implemented");
+  }
+
+  @Override
+  public Type visit(FunctionCallExp n) {
+    throw new Error("Not implemented");
+  }
+
+  @Override
+  public Type visit(FormalList n) {
+    throw new Error("Not implemented");
+  }
+
+  @Override
+  public Type visit(ExpressionList n) {
+    throw new Error("Not implemented");
+  }
 }
