@@ -26,6 +26,6 @@ public class FunctionDeclaration extends Statement {
   
   @Override
   public <R> R accept(Visitor<R> v) {
-    return null;
+    return v.visit(this);
   }
 }

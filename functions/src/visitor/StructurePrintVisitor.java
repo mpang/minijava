@@ -6,6 +6,10 @@ import ast.AST;
 import ast.Assign;
 import ast.BooleanType;
 import ast.Conditional;
+import ast.ExpressionList;
+import ast.FormalList;
+import ast.FunctionCallExp;
+import ast.FunctionDeclaration;
 import ast.IdentifierExp;
 import ast.IntegerLiteral;
 import ast.IntegerType;
@@ -18,7 +22,6 @@ import ast.Print;
 import ast.Program;
 import ast.Times;
 import ast.UnknownType;
-
 import util.IndentingWriter;
 
 
@@ -170,4 +173,44 @@ public class StructurePrintVisitor implements Visitor<Void> {
 		return null;
 	}
 
+  @Override
+  public Void visit(FunctionDeclaration n) {
+    out.println("FunctionDeclaration");
+    out.indent();
+    n.returnType.accept(this);
+    n.name.accept(this);
+    n.parameters.accept(this);
+    n.statements.accept(this);
+    n.returnExpression.accept(this);
+    out.outdent();
+    return null;
+  }
+
+  @Override
+  public Void visit(FunctionCallExp n) {
+    out.println("Call");
+    out.indent();
+    n.name.accept(this);
+    n.arguments.accept(this);
+    out.outdent();
+    return null;
+  }
+
+  @Override
+  public Void visit(FormalList n) {
+    out.println("FormalList");
+    out.indent();
+    n.parameters.accept(this);
+    out.outdent();
+    return null;
+  }
+
+  @Override
+  public Void visit(ExpressionList n) {
+    out.println("ExpressionList");
+    out.indent();
+    n.expressions.accept(this);
+    out.outdent();
+    return null;
+  }
 }

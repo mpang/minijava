@@ -6,6 +6,10 @@ import ast.AST;
 import ast.Assign;
 import ast.BooleanType;
 import ast.Conditional;
+import ast.ExpressionList;
+import ast.FormalList;
+import ast.FunctionCallExp;
+import ast.FunctionDeclaration;
 import ast.IdentifierExp;
 import ast.IntegerLiteral;
 import ast.IntegerType;
@@ -18,7 +22,6 @@ import ast.Print;
 import ast.Program;
 import ast.Times;
 import ast.UnknownType;
-
 import util.IndentingWriter;
 
 
@@ -165,4 +168,55 @@ public class PrettyPrintVisitor implements Visitor<Void> {
 		}
 		return null;
 	}
+
+  @Override
+  public Void visit(FunctionDeclaration n) {
+    n.returnType.accept(this);
+    out.print(" ");
+    n.name.accept(this);
+    out.print("(");
+    n.parameters.accept(this);
+    out.println(") {");
+    out.indent();
+    n.statements.accept(this);
+    out.print("return ");
+    n.returnExpression.accept(this);
+    out.println(";");
+    out.outdent();
+    out.println("}");
+    return null;
+  }
+
+  @Override
+  public Void visit(FunctionCallExp n) {
+    n.name.accept(this);
+    out.print("(");
+    n.arguments.accept(this);
+    out.println(")");
+    return null;
+  }
+
+  @Override
+  public Void visit(FormalList n) {
+    for (int i = 0; i < n.parameters.size(); i += 2) {
+      n.parameters.elementAt(i).accept(this);
+      out.print(" ");
+      n.parameters.elementAt(i + 1).accept(this);
+      if (i < n.parameters.size() - 2) {
+        out.print(", ");
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(ExpressionList n) {
+    for (int i = 0; i < n.expressions.size(); i++) {
+      n.expressions.elementAt(i).accept(this);
+      if (i < n.expressions.size() - 1) {
+        out.print(", ");
+      }
+    }
+    return null;
+  }
 }
