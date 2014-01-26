@@ -178,7 +178,7 @@ public class StructurePrintVisitor implements Visitor<Void> {
     out.println("FunctionDeclaration");
     out.indent();
     n.returnType.accept(this);
-    n.name.accept(this);
+    new IdentifierExp(n.name).accept(this);
     n.parameters.accept(this);
     n.statements.accept(this);
     n.returnExpression.accept(this);
@@ -190,7 +190,7 @@ public class StructurePrintVisitor implements Visitor<Void> {
   public Void visit(FunctionCallExp n) {
     out.println("Call");
     out.indent();
-    n.name.accept(this);
+    new IdentifierExp(n.name).accept(this);
     n.arguments.accept(this);
     out.outdent();
     return null;

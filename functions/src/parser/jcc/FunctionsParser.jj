@@ -191,7 +191,7 @@ Expression PrimaryExpressionIdentifierBranch(String i) : {
 {	< LPAREN >
 	arguments = ExpressionList()
 	< RPAREN >
-	{ return new FunctionCallExp(new IdentifierExp(i), arguments); }|	{ return new IdentifierExp(i); }
+	{ return new FunctionCallExp(i, arguments); }|	{ return new IdentifierExp(i); }
 }
 
 ExpressionList ExpressionList() : {
@@ -271,5 +271,5 @@ Statement FunctionDeclaration() : {
 	returnExpression = Expression()
 	< SEMICOLON >
 	< RBRACE >
-	{ return new FunctionDeclaration(returnType, new IdentifierExp(name), parameters, statements, returnExpression); }
+	{ return new FunctionDeclaration(returnType, name, parameters, statements, returnExpression); }
 }

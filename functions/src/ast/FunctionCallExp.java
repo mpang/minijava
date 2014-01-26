@@ -4,10 +4,10 @@ import visitor.Visitor;
 
 public class FunctionCallExp extends Expression {
   
-  public final IdentifierExp name;
+  public final String name;
   public final ExpressionList arguments;
   
-  public FunctionCallExp(IdentifierExp name, ExpressionList arguments) {
+  public FunctionCallExp(String name, ExpressionList arguments) {
     super();
     this.name = name;
     this.arguments = arguments;

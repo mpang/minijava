@@ -5,13 +5,13 @@ import visitor.Visitor;
 public class FunctionDeclaration extends Statement {
   
   public final Type returnType;
-  public final IdentifierExp name;
+  public final String name;
   public final FormalList parameters;
   public final NodeList<Statement> statements;
   public final Expression returnExpression;
 
   public FunctionDeclaration(Type returnType,
-                             IdentifierExp name,
+                             String name,
                              FormalList parameters,
                              NodeList<Statement> statements,
                              Expression returnExpression) {
