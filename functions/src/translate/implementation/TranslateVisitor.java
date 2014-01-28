@@ -24,6 +24,7 @@ import ast.LessThan;
 import ast.Minus;
 import ast.NodeList;
 import ast.Not;
+import ast.ParameterDeclaration;
 import ast.Plus;
 import ast.Print;
 import ast.Program;
@@ -244,6 +245,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(ExpressionList n) {
+    throw new Error("Not implemented");
+  }
+
+  @Override
+  public TRExp visit(ParameterDeclaration n) {
     throw new Error("Not implemented");
   }
 }
