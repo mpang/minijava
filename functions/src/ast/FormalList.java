@@ -4,9 +4,9 @@ import visitor.Visitor;
 
 public class FormalList extends AST {
 
-  public final NodeList<AST> parameters;
+  public final NodeList<ParameterDeclaration> parameters;
   
-  public FormalList(NodeList<AST> parameters) {
+  public FormalList(NodeList<ParameterDeclaration> parameters) {
     this.parameters = parameters;
   }
   

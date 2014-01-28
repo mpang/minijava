@@ -22,6 +22,7 @@ import ast.Print;
 import ast.Program;
 import ast.Times;
 import ast.UnknownType;
+import ast.ParameterDeclaration;
 import util.IndentingWriter;
 
 
@@ -188,7 +189,7 @@ public class StructurePrintVisitor implements Visitor<Void> {
 
   @Override
   public Void visit(FunctionCallExp n) {
-    out.println("Call");
+    out.println("FunctionCallExp");
     out.indent();
     new IdentifierExp(n.name).accept(this);
     n.arguments.accept(this);
@@ -210,6 +211,16 @@ public class StructurePrintVisitor implements Visitor<Void> {
     out.println("ExpressionList");
     out.indent();
     n.expressions.accept(this);
+    out.outdent();
+    return null;
+  }
+
+  @Override
+  public Void visit(ParameterDeclaration n) {
+    out.println("ParameterDeclaration");
+    out.indent();
+    n.type.accept(this);
+    new IdentifierExp(n.name).accept(this);
     out.outdent();
     return null;
   }

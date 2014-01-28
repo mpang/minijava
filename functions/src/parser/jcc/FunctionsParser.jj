@@ -228,22 +228,20 @@ Type Type() : {
 FormalList FormalList() : {
   	Type parameterType;
 	String parameterName;
-  	NodeList<AST> parameters = new NodeList<AST>();}
+  	NodeList<ParameterDeclaration> parameters = new NodeList<ParameterDeclaration>();}
 {
   	(
 		parameterType = Type()
 	  	parameterName = Identifier()
 	  	{
-	    	parameters.add(parameterType);
-	    	parameters.add(new IdentifierExp(parameterName));
+	    	parameters.add(new ParameterDeclaration(parameterType, parameterName));
 	  	}
 	  	(
 	    	< COMMA >
 	    	parameterType = Type()
 	  		parameterName = Identifier()
 	  		{
-	      		parameters.add(parameterType);
-	      		parameters.add(new IdentifierExp(parameterName));
+	      		parameters.add(new ParameterDeclaration(parameterType, parameterName));
 	  		}
 	  	)*
 	)?

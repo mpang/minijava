@@ -22,6 +22,7 @@ import ast.Print;
 import ast.Program;
 import ast.Times;
 import ast.UnknownType;
+import ast.ParameterDeclaration;
 import util.IndentingWriter;
 
 
@@ -198,11 +199,9 @@ public class PrettyPrintVisitor implements Visitor<Void> {
 
   @Override
   public Void visit(FormalList n) {
-    for (int i = 0; i < n.parameters.size(); i += 2) {
+    for (int i = 0; i < n.parameters.size(); i++) {
       n.parameters.elementAt(i).accept(this);
-      out.print(" ");
-      n.parameters.elementAt(i + 1).accept(this);
-      if (i < n.parameters.size() - 2) {
+      if (i < n.parameters.size() - 1) {
         out.print(", ");
       }
     }
@@ -217,6 +216,14 @@ public class PrettyPrintVisitor implements Visitor<Void> {
         out.print(", ");
       }
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(ParameterDeclaration n) {
+    n.type.accept(this);
+    out.print(" ");
+    new IdentifierExp(n.name).accept(this);
     return null;
   }
 }

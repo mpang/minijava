@@ -20,6 +20,7 @@ import ast.Print;
 import ast.Program;
 import ast.Times;
 import ast.UnknownType;
+import ast.ParameterDeclaration;
 
 /**
  * A modernized version of the Visitor interface, adapted from the textbook's
@@ -38,6 +39,7 @@ public interface Visitor<R> {
 	
 	//Declarations
 	public R visit(Program n);
+	public R visit(ParameterDeclaration n);
 	
 	//Types
 
