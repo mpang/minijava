@@ -1,18 +1,17 @@
 package translate.implementation;
 
-import ast.Program;
-import ast.Type;
+import ir.frame.Frame;
 import translate.Fragments;
 import typechecker.TypeChecked;
+import typechecker.implementation.SymbolTable;
 import typechecker.implementation.TypeCheckerImplementation;
-import util.ImpTable;
-import ir.frame.Frame;
+import ast.Program;
 
 public class TranslateImplementation {
 
 	private Frame frameFactory;
 	private Program program;
-	private ImpTable<Type> table;
+	private SymbolTable table;
 
 	public TranslateImplementation(Frame frameFactory, TypeChecked _typechecked) {
 		this.frameFactory = frameFactory;

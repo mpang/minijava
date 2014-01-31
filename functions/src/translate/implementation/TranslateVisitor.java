@@ -8,6 +8,21 @@ import static ir.tree.IR.SEQ;
 import static ir.tree.IR.TEMP;
 import static ir.tree.IR.TRUE;
 import static translate.Translator.L_MAIN;
+import ir.frame.Access;
+import ir.frame.Frame;
+import ir.temp.Label;
+import ir.temp.Temp;
+import ir.tree.BINOP.Op;
+import ir.tree.CJUMP.RelOp;
+import ir.tree.IR;
+import ir.tree.IRStm;
+import ir.tree.TEMP;
+import translate.Fragments;
+import translate.ProcFragment;
+import translate.Translator;
+import typechecker.implementation.SymbolTable;
+import util.FunTable;
+import visitor.Visitor;
 import ast.AST;
 import ast.Assign;
 import ast.BooleanType;
@@ -29,23 +44,7 @@ import ast.Plus;
 import ast.Print;
 import ast.Program;
 import ast.Times;
-import ast.Type;
 import ast.UnknownType;
-import ir.frame.Access;
-import ir.frame.Frame;
-import ir.temp.Label;
-import ir.temp.Temp;
-import ir.tree.IR;
-import ir.tree.IRStm;
-import ir.tree.TEMP;
-import ir.tree.BINOP.Op;
-import ir.tree.CJUMP.RelOp;
-import translate.Fragments;
-import translate.ProcFragment;
-import translate.Translator;
-import util.FunTable;
-import util.Lookup;
-import visitor.Visitor;
 
 
 /**
@@ -74,7 +73,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	private Frame frame;
 	private FunTable<Access> currentEnv;
 
-	public TranslateVisitor(Lookup<Type> table, Frame frameFactory) {
+	public TranslateVisitor(SymbolTable table, Frame frameFactory) {
 		this.frags = new Fragments(frameFactory);
 		this.frameFactory = frameFactory;
 	}
