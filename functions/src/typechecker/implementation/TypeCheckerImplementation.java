@@ -1,11 +1,9 @@
 package typechecker.implementation;
 
-import ast.Program;
-import ast.Type;
 import typechecker.ErrorReport;
 import typechecker.TypeChecked;
 import typechecker.TypeCheckerException;
-import util.ImpTable;
+import ast.Program;
 
 
 public class TypeCheckerImplementation extends TypeChecked {
@@ -23,7 +21,7 @@ public class TypeCheckerImplementation extends TypeChecked {
 	/**
 	 * The symbol table computed by phase 1:
 	 */
-	private ImpTable<Type> variables;
+	private SymbolTable symbolTable;
 
 	public TypeCheckerImplementation(Program program) {
 		this.program = program;
@@ -31,9 +29,9 @@ public class TypeCheckerImplementation extends TypeChecked {
 
 	public TypeChecked typeCheck() throws TypeCheckerException {
 		//Phase 1:
-		variables = buildTable();
+		symbolTable = buildTable();
 		//Phase 2:
-		program.accept(new TypeCheckVisitor(variables, errors));
+		program.accept(new TypeCheckVisitor(symbolTable, errors));
 		//Throw an exception if there were errors:
 		errors.close();
 		// If there was no exception:
@@ -46,22 +44,22 @@ public class TypeCheckerImplementation extends TypeChecked {
 	 * in isolation. In normal operation (not unit testing) this method should 
 	 * not be called by code outside the type checker.
 	 */
-	public ImpTable<Type> buildTable() {
-		variables = program.accept(new BuildSymbolTableVisitor(errors));
-		return variables;
+	public SymbolTable buildTable() {
+		symbolTable = program.accept(new BuildSymbolTableVisitor(errors));
+		return symbolTable;
 	}
 
-	public ImpTable<Type> typeCheckPhaseTwo() throws TypeCheckerException {
-		program.accept(new TypeCheckVisitor(variables, errors));
+	public SymbolTable typeCheckPhaseTwo() throws TypeCheckerException {
+		program.accept(new TypeCheckVisitor(symbolTable, errors));
 		errors.close();
-		return variables;
+		return symbolTable;
 	}
+	
 	public Program getProgram() {
 		return program;
 	}
 
-	public ImpTable<Type> getTable() {
-		return variables;
+	public SymbolTable getTable() {
+		return symbolTable;
 	}
-
 }

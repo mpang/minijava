@@ -4,6 +4,8 @@ package typechecker.implementation;
 import java.util.ArrayList;
 import java.util.List;
 
+import typechecker.ErrorReport;
+import visitor.Visitor;
 import ast.AST;
 import ast.Assign;
 import ast.BooleanType;
@@ -27,9 +29,6 @@ import ast.Program;
 import ast.Times;
 import ast.Type;
 import ast.UnknownType;
-import typechecker.ErrorReport;
-import util.ImpTable;
-import visitor.Visitor;
 
 /**
  * This class implements Phase 2 of the Type Checker. This phase
@@ -55,11 +54,11 @@ public class TypeCheckVisitor implements Visitor<Type> {
 	/**
 	 * The symbol table from Phase 1. 
 	 */
-	private ImpTable<Type> variables;
+	private SymbolTable symbolTable;
 
 
-	public TypeCheckVisitor(ImpTable<Type> variables, ErrorReport errors) {
-		this.variables = variables;
+	public TypeCheckVisitor(SymbolTable symbolTable, ErrorReport errors) {
+		this.symbolTable = symbolTable;
 		this.errors = errors;
 	}
 
@@ -137,7 +136,7 @@ public class TypeCheckVisitor implements Visitor<Type> {
 	@Override
 	public Type visit(Assign n) {
 		Type expressionType = n.value.accept(this);
-		variables.set(n.name, expressionType);
+		symbolTable.setVariableType(n.name, expressionType);
 		return null; 
 	}
 
@@ -190,7 +189,7 @@ public class TypeCheckVisitor implements Visitor<Type> {
 
 	@Override
 	public Type visit(IdentifierExp n) {
-		Type type = variables.lookup(n.name);
+		Type type = symbolTable.lookupVariable(n.name);
 		if (type == null) 
 			type = new UnknownType();
 		return type;

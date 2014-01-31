@@ -1,9 +1,16 @@
 package typechecker.implementation;
 
+import typechecker.ErrorReport;
+import util.ImpTable.DuplicateException;
+import visitor.Visitor;
 import ast.AST;
 import ast.Assign;
 import ast.BooleanType;
 import ast.Conditional;
+import ast.ExpressionList;
+import ast.FormalList;
+import ast.FunctionCallExp;
+import ast.FunctionDeclaration;
 import ast.IdentifierExp;
 import ast.IntegerLiteral;
 import ast.IntegerType;
@@ -11,25 +18,22 @@ import ast.LessThan;
 import ast.Minus;
 import ast.NodeList;
 import ast.Not;
+import ast.ParameterDeclaration;
 import ast.Plus;
 import ast.Print;
 import ast.Program;
 import ast.Times;
 import ast.Type;
 import ast.UnknownType;
-import typechecker.ErrorReport;
-import util.ImpTable;
-import util.ImpTable.DuplicateException;
-import visitor.DefaultVisitor;
 
 /**
  * This visitor implements Phase 1 of the TypeChecker. It constructs the symboltable.
  * 
  * @author norm
  */
-public class BuildSymbolTableVisitor extends DefaultVisitor<ImpTable<Type>> {
+public class BuildSymbolTableVisitor implements Visitor<SymbolTable> {
 	
-	private final ImpTable<Type> variables = new ImpTable<Type>();
+	private final SymbolTable symbolTable = new SymbolTable();
 	private final ErrorReport errors;
 	
 	public BuildSymbolTableVisitor(ErrorReport errors) {
@@ -43,59 +47,61 @@ public class BuildSymbolTableVisitor extends DefaultVisitor<ImpTable<Type>> {
 	// We also check for duplicate identifier definitions 
 
 	@Override
-	public ImpTable<Type> visit(Program n) {
+	public SymbolTable visit(Program n) {
 		n.statements.accept(this);
 		n.print.accept(this); // process all the "normal" classes.
-		return variables;
+		return symbolTable;
 	}
 	
 	@Override
-	public <T extends AST> ImpTable<Type> visit(NodeList<T> ns) {
-		for (int i = 0; i < ns.size(); i++)
+	public <T extends AST> SymbolTable visit(NodeList<T> ns) {
+		for (int i = 0; i < ns.size(); i++) {
 			ns.elementAt(i).accept(this);
+		}
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(Assign n) {
+	public SymbolTable visit(Assign n) {
 		n.value.accept(this);
-		def(variables, n.name, new UnknownType());
+		addVariable(symbolTable, n.name, new UnknownType());
 		return null;
 	}
 	
 
 	@Override
-	public ImpTable<Type> visit(IdentifierExp n) {
-		if (variables.lookup(n.name) == null)
+	public SymbolTable visit(IdentifierExp n) {
+		if (symbolTable.lookupVariable(n.name) == null) {
 			errors.undefinedId(n.name);
+		}
 		return null;
 	}
 	
 	@Override
-	public ImpTable<Type> visit(BooleanType n) {
+	public SymbolTable visit(BooleanType n) {
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(IntegerType n) {
+	public SymbolTable visit(IntegerType n) {
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(Print n) {
+	public SymbolTable visit(Print n) {
 		n.exp.accept(this);
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(LessThan n) {
+	public SymbolTable visit(LessThan n) {
 		n.e1.accept(this);
 		n.e2.accept(this);
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(Conditional n) {
+	public SymbolTable visit(Conditional n) {
 		n.e1.accept(this);
 		n.e2.accept(this);
 		n.e3.accept(this);
@@ -103,55 +109,96 @@ public class BuildSymbolTableVisitor extends DefaultVisitor<ImpTable<Type>> {
 	}
 	
 	@Override
-	public ImpTable<Type> visit(Plus n) {
+	public SymbolTable visit(Plus n) {
 		n.e1.accept(this);
 		n.e2.accept(this);
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(Minus n) {
+	public SymbolTable visit(Minus n) {
 		n.e1.accept(this);
 		n.e2.accept(this);
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(Times n) {
+	public SymbolTable visit(Times n) {
 		n.e1.accept(this);
 		n.e2.accept(this);
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(IntegerLiteral n) {
+	public SymbolTable visit(IntegerLiteral n) {
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(Not not) {
+	public SymbolTable visit(Not not) {
 		not.e.accept(this);
 		return null;
 	}
 
 	@Override
-	public ImpTable<Type> visit(UnknownType n) {
+	public SymbolTable visit(UnknownType n) {
 		return null;
 	}
 
+  @Override
+  public SymbolTable visit(ParameterDeclaration n) {
+    addVariable(symbolTable, n.name, new UnknownType());
+    return null;
+  }
+
+  @Override
+  public SymbolTable visit(FunctionDeclaration n) {
+    addFunction(symbolTable, n.name, new UnknownType());
+    symbolTable.enterScope(n.name);
+    n.parameters.accept(this);
+    n.statements.accept(this);
+    n.returnExpression.accept(this);
+    symbolTable.exitScope();
+    return null;
+  }
+
+  @Override
+  public SymbolTable visit(FunctionCallExp n) {
+    // TODO: allow forward declaration of function
+    if (symbolTable.lookupFunction(n.name) == null) {
+      errors.undefinedId(n.name);
+    }
+    n.arguments.accept(this);
+    return null;
+  }
+
+  @Override
+  public SymbolTable visit(FormalList n) {
+    n.parameters.accept(this);
+    return null;
+  }
+
+  @Override
+  public SymbolTable visit(ExpressionList n) {
+    n.expressions.accept(this);
+    return null;
+  }
+	
 	///////////////////// Helpers ///////////////////////////////////////////////
 	
-	/**
-	 * Add an entry to a table, and check whether the name already existed.
-	 * If the name already existed before, the new definition is ignored and
-	 * an error is sent to the error report.
-	 */
-	private <V> void def(ImpTable<V> tab, String name, V value) {
-		try {
-			tab.put(name, value);
-		} catch (DuplicateException e) {
-			errors.duplicateDefinition(name);
-		}
+	private void addVariable(SymbolTable table, String name, Type type) {
+	  try {
+      table.insertVariable(name, type);
+    } catch (DuplicateException e) {
+      errors.duplicateDefinition(name);
+    }
 	}
-
+	
+	private void addFunction(SymbolTable table, String name, Type type) {
+	  try {
+      table.insertFunction(name, type);
+    } catch (DuplicateException e) {
+      errors.duplicateDefinition(name);
+    }
+	}
 }
