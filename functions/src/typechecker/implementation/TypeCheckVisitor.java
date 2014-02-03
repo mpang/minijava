@@ -190,8 +190,9 @@ public class TypeCheckVisitor implements Visitor<Type> {
 	@Override
 	public Type visit(IdentifierExp n) {
 		Type type = symbolTable.lookupVariable(n.name);
-		if (type == null) 
+		if (type == null) {
 			type = new UnknownType();
+		}
 		return type;
 	}
 
@@ -204,26 +205,42 @@ public class TypeCheckVisitor implements Visitor<Type> {
 
   @Override
   public Type visit(FunctionDeclaration n) {
-    throw new Error("Not implemented");
+  	symbolTable.setFunctionType(n.name, n.returnType);
+  	symbolTable.enterScope(n.name);
+  	n.parameters.accept(this);
+  	n.statements.accept(this);
+  	check(n.returnExpression, n.returnType);
+  	symbolTable.exitScope();
+  	return n.returnType;
   }
 
   @Override
   public Type visit(FunctionCallExp n) {
-    throw new Error("Not implemented");
+  	Type type = symbolTable.lookupFunction(n.name);
+  	if (type == null) {
+  		errors.undefinedId(n.name);
+  	}  	
+  	n.arguments.accept(this);
+  	return type;
   }
 
   @Override
   public Type visit(FormalList n) {
-    throw new Error("Not implemented");
+		for (int i = 0; i < n.parameters.size(); i++) {
+			n.parameters.elementAt(i).accept(this);
+		}
+		return null;
   }
 
   @Override
   public Type visit(ExpressionList n) {
-    throw new Error("Not implemented");
+  	n.expressions.accept(this);
+  	return null;
   }
 
   @Override
   public Type visit(ParameterDeclaration n) {
-    throw new Error("Not implemented");
+		symbolTable.setVariableType(n.name, n.type);
+  	return n.type;
   }
 }

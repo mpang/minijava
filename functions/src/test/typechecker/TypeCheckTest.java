@@ -129,6 +129,24 @@ public class TypeCheckTest {
 		expect( typeError("i", new BooleanType(), new IntegerType()),
 				progWithExp("!i") );
 	}
+	
+	// Copied from project phase 2 page
+	@Test public void badFunctionDeclaration() throws Exception {
+		expect( typeError("1 < 2", new IntegerType(), new BooleanType()),
+				progWithFunction("int x() { return 1 < 2; }"));
+		expect( typeError("1", new BooleanType(), new IntegerType()),
+				progWithFunction("boolean x() { return 1; }"));
+	}
+	
+	// Copied from project phase 2 page
+	@Test public void goodFunctionDeclaration() throws Exception {
+		accept(progWithFunction("int x() { return 1; }"));
+		accept(progWithFunction("boolean x() { return 1 < 2; }"));
+		accept(progWithFunction("int x(int x) { return x+1; }"));
+		accept(progWithFunction("boolean x(int x) { return x < 1; }"));
+		accept(progWithFunction("int x(int x, int y) { return x + y; }"));
+		accept(progWithFunction("boolean x(int x, int y) { return x < y; }"));
+	}
 
 	///////////////////////// Helpers /////////////////////////////////////////////
 
@@ -168,6 +186,15 @@ public class TypeCheckTest {
 		" i = 5;\n" + 
 		" b = 4 < 5;\n" +
 		" x = " + exp + ";\n" +
+		" print 1";
+	}
+	
+	/**
+	 * Generate a test program with a function declaration in it.
+	 */
+	private String progWithFunction(String exp) {
+		return 
+		exp + "\n" +
 		" print 1";
 	}
 
