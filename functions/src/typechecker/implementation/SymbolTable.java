@@ -1,5 +1,7 @@
 package typechecker.implementation;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 
 import util.DefaultIndentable;
@@ -12,12 +14,12 @@ public class SymbolTable extends DefaultIndentable {
 
   private final ImpTable<Type> globalVariables;
   private final ImpTable<FunctionEntry> functions;
-  private ImpTable<Type> currentScope;
+  private FunctionEntry currentFunction;
   
   public SymbolTable() {
     globalVariables = new ImpTable<Type>();
     functions = new ImpTable<FunctionEntry>();
-    currentScope = globalVariables;
+    currentFunction = null;
   }
   
   /**
@@ -27,14 +29,22 @@ public class SymbolTable extends DefaultIndentable {
   public void enterScope(String functionName) {
     FunctionEntry functionEntry = functions.lookup(functionName);
     assert functionEntry != null;
-    currentScope = functionEntry.variables;
+    currentFunction = functionEntry;
   }
   
   /**
    * Return to global scope
    */
   public void exitScope() {
-    currentScope = globalVariables;
+    currentFunction = null;
+  }
+  
+  /**
+   * Must call {@link #enterScope(String)} before calling this function
+   * @return signature of current function scope
+   */
+  public FunctionSignature getCurrentFunctionSignature() {
+    return currentFunction.functionSignature;
   }
   
   /**
@@ -43,16 +53,17 @@ public class SymbolTable extends DefaultIndentable {
    * @return type of that variable
    */
   public Type lookupVariable(String name) {
-    return currentScope.lookup(name);
+    return currentFunction == null ? globalVariables.lookup(name)
+                                   : currentFunction.variables.lookup(name);
   }
   
   /**
    * 
    * @param name name of the function
-   * @return return type of that function
+   * @return return signature of that function
    */
-  public Type lookupFunction(String name) {
-    return functions.lookup(name).returnType;
+  public FunctionSignature lookupFunction(String name) {
+    return functions.lookup(name).functionSignature;
   }
   
   /**
@@ -62,17 +73,21 @@ public class SymbolTable extends DefaultIndentable {
    * @throws DuplicateException if variable with the same name already exists
    */
   public void insertVariable(String name, Type type) throws DuplicateException {
-    currentScope.put(name, type);
+    if (currentFunction == null) {
+      globalVariables.put(name, type);
+    } else {
+      currentFunction.variables.put(name, type);
+    }
   }
   
   /**
    * 
    * @param name name of a function
-   * @param type return type of a function
+   * @param functionSignature signature of a function
    * @throws DuplicateException if function with the same name already exists
    */
-  public void insertFunction(String name, Type type) throws DuplicateException {
-    functions.put(name, new FunctionEntry(type));
+  public void insertFunction(String name, FunctionSignature functionSignature) throws DuplicateException {
+    functions.put(name, new FunctionEntry(functionSignature));
   }
   
   /**
@@ -81,16 +96,11 @@ public class SymbolTable extends DefaultIndentable {
    * @param type type of a variable
    */
   public void setVariableType(String name, Type type) {
-    currentScope.set(name, type);
-  }
-  
-  /**
-   * Change the return type of a function
-   * @param name
-   * @param type
-   */
-  public void setFunctionType(String name, Type type) {
-    functions.lookup(name).returnType = type;
+    if (currentFunction == null) {
+      globalVariables.set(name, type);
+    } else {
+      currentFunction.variables.set(name, type);
+    }
   }
   
   @Override
@@ -109,8 +119,16 @@ public class SymbolTable extends DefaultIndentable {
       out.println(functionEntry.getKey() + " = Table {");
       out.indent();
       
-      out.print("'return type' = ");
-      out.println(functionEntry.getValue().returnType);
+      // print signature
+      out.print("'signature' = (");
+      for (Type type : functionEntry.getValue().functionSignature.parameterTypes) {
+        out.print(type);
+        out.print(", ");
+      }
+      out.print(") --> ");
+      out.println(functionEntry.getValue().functionSignature.returnType);
+      
+      // print variables
       for (Entry<String, Type> variablEntry : functionEntry.getValue().variables) {
         out.print(variablEntry.getKey() + " = ");
         out.println(variablEntry.getValue());
@@ -128,14 +146,48 @@ public class SymbolTable extends DefaultIndentable {
    * Class represents a function entry in a symbol table
    *
    */
-  private class FunctionEntry {
+  static class FunctionEntry {
     
-    private Type returnType;
-    private final ImpTable<Type> variables; // local variables and parameters
+    private final FunctionSignature functionSignature;
+    private final ImpTable<Type> variables; // both local variables and parameters
     
-    private FunctionEntry(Type returnType) {
-      this.returnType = returnType;
+    private FunctionEntry(FunctionSignature functionSignature) {
+      this.functionSignature = functionSignature;
       variables = new ImpTable<Type>();
+    }
+  }
+  
+  /**
+   * Class represents a function signature (return type + list of parameter types)
+   *
+   */
+  static class FunctionSignature {
+    private Type returnType;
+    private List<Type> parameterTypes;  // order matters
+    
+    FunctionSignature(Type returnType, List<Type> parameterTypes) {
+      this.returnType = returnType;
+      this.parameterTypes = parameterTypes;
+    }
+    
+    Type getReturnType() {
+      return returnType;
+    }
+    
+    List<Type> getParameterTypes() {
+      return new ArrayList<Type>(parameterTypes);
+    }
+    
+    void setReturnType(Type returnType) {
+      this.returnType = returnType;
+    }
+    
+    void addParameterType(Type parameterType) {
+      parameterTypes.add(parameterType);
+    }
+    
+    void setParameterType(int index, Type parameterType) {
+      parameterTypes.set(index, parameterType);
     }
   }
 }

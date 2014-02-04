@@ -1,6 +1,9 @@
 package typechecker.implementation;
 
+import java.util.ArrayList;
+
 import typechecker.ErrorReport;
+import typechecker.implementation.SymbolTable.FunctionSignature;
 import util.ImpTable.DuplicateException;
 import visitor.Visitor;
 import ast.AST;
@@ -153,7 +156,7 @@ public class BuildSymbolTableVisitor implements Visitor<SymbolTable> {
 
   @Override
   public SymbolTable visit(FunctionDeclaration n) {
-    addFunction(symbolTable, n.name, new UnknownType());
+    addFunction(symbolTable, n.name, new FunctionSignature(new UnknownType(), new ArrayList<Type>()));
     symbolTable.enterScope(n.name);
     n.parameters.accept(this);
     n.statements.accept(this);
@@ -174,7 +177,11 @@ public class BuildSymbolTableVisitor implements Visitor<SymbolTable> {
 
   @Override
   public SymbolTable visit(FormalList n) {
-    n.parameters.accept(this);
+    FunctionSignature currentFunctionSignature = symbolTable.getCurrentFunctionSignature();
+    for (int i = 0; i < n.parameters.size(); i++) {
+      n.parameters.elementAt(i).accept(this);
+      currentFunctionSignature.addParameterType(new UnknownType());
+    }
     return null;
   }
 
@@ -194,9 +201,9 @@ public class BuildSymbolTableVisitor implements Visitor<SymbolTable> {
     }
 	}
 	
-	private void addFunction(SymbolTable table, String name, Type type) {
+	private void addFunction(SymbolTable table, String name, FunctionSignature functionSignature) {
 	  try {
-      table.insertFunction(name, type);
+      table.insertFunction(name, functionSignature);
     } catch (DuplicateException e) {
       errors.duplicateDefinition(name);
     }
