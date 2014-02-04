@@ -46,6 +46,10 @@ public class ErrorMessage {
 			Type actual) {
 		return new ErrorMessage(exp+" has type "+actual+" expected one of " + expected);
 	}
+	
+	public static ErrorMessage arityMismatchError(String functionName, int expected, int given) {
+	  return new ErrorMessage(functionName + ": arity mismatch; expected " + expected + " arguments, given " + given);
+	}
 
 	@Override
 	public String toString() {

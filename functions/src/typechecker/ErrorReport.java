@@ -53,6 +53,10 @@ public class ErrorReport {
 		report(ErrorMessage.undefinedId(name));
 	}
 	
+	public void arityMismatch(String functionName, int expected, int given) {
+	  report(ErrorMessage.arityMismatchError(functionName, expected, given));
+	}
+	
 	public void typeError(Expression exp, Type expected, Type actual) {
 		report(ErrorMessage.typeError(exp,expected,actual));
 	}

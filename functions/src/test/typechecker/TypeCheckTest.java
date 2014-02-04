@@ -1,5 +1,7 @@
 package test.typechecker;
 
+import static parser.Parser.parseExp;
+
 import java.io.File;
 
 import junit.framework.Assert;
@@ -7,18 +9,13 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import parser.jcc.ParseException;
-
-import ast.BooleanType;
-import ast.IntegerType;
-import ast.Type;
-
-import util.SampleCode;
 import typechecker.ErrorMessage;
 import typechecker.TypeCheckerException;
 import typechecker.implementation.TypeChecker;
-
-
-import static parser.Parser.*;
+import util.SampleCode;
+import ast.BooleanType;
+import ast.IntegerType;
+import ast.Type;
 
 /**
  * The difficulty in writing tests for this unit of work is that we should,
@@ -146,6 +143,19 @@ public class TypeCheckTest {
 		accept(progWithFunction("boolean x(int x) { return x < 1; }"));
 		accept(progWithFunction("int x(int x, int y) { return x + y; }"));
 		accept(progWithFunction("boolean x(int x, int y) { return x < y; }"));
+	}
+	
+	@Test
+	public void badFunctionCall() throws Exception {
+	  expect(ErrorMessage.arityMismatchError("test", 2, 1),
+	      progWithFunction("int test(int x, int y) { return 1; } i0 = test(3);"));
+	  expect(typeError("1 < 2", new IntegerType(), new BooleanType()),
+	      progWithFunction("boolean test(int x, int y) { return x < y; } i0 = test(1, 1 < 2);"));
+	}
+	
+	@Test
+	public void goodFunctionCall() throws Exception {
+	  accept(progWithFunction("boolean test(int x, int y) { return x < y; } i0 = test(1, 2);"));
 	}
 
 	///////////////////////// Helpers /////////////////////////////////////////////
