@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import typechecker.ErrorReport;
+import typechecker.implementation.SymbolTable.FunctionSignature;
 import visitor.Visitor;
 import ast.AST;
 import ast.Assign;
@@ -203,44 +204,47 @@ public class TypeCheckVisitor implements Visitor<Type> {
 		return n.getType(); 
 	}
 
-  @Override
-  public Type visit(FunctionDeclaration n) {
-  	symbolTable.setFunctionType(n.name, n.returnType);
-  	symbolTable.enterScope(n.name);
-  	n.parameters.accept(this);
-  	n.statements.accept(this);
-  	check(n.returnExpression, n.returnType);
-  	symbolTable.exitScope();
-  	return n.returnType;
-  }
+	@Override
+	public Type visit(FunctionDeclaration n) {
+	  symbolTable.lookupFunction(n.name).setReturnType(n.returnType);
+	  symbolTable.enterScope(n.name);
+	  n.parameters.accept(this);
+	  n.statements.accept(this);
+	  check(n.returnExpression, n.returnType);
+	  symbolTable.exitScope();
+	  return n.returnType;
+	}
 
   @Override
   public Type visit(FunctionCallExp n) {
-  	Type type = symbolTable.lookupFunction(n.name);
-  	if (type == null) {
-  		errors.undefinedId(n.name);
-  	}  	
-  	n.arguments.accept(this);
-  	return type;
+    Type returnType = symbolTable.lookupFunction(n.name).getReturnType();
+    List<Type> paramTypes = symbolTable.lookupFunction(n.name).getParameterTypes();
+    for (int i = 0; i < n.arguments.expressions.size(); i++) {
+      // Check FunctionCallExp parameters and match with FunctionSignature
+      check(n.arguments.expressions.elementAt(i), paramTypes.get(i));
+    }
+    return returnType;
   }
 
   @Override
   public Type visit(FormalList n) {
-		for (int i = 0; i < n.parameters.size(); i++) {
-			n.parameters.elementAt(i).accept(this);
-		}
-		return null;
-  }
-
-  @Override
-  public Type visit(ExpressionList n) {
-  	n.expressions.accept(this);
+  	FunctionSignature function = symbolTable.getCurrentFunctionSignature();
+  	for (int i = 0; i < n.parameters.size(); i++) {
+  	  Type paramType = n.parameters.elementAt(i).accept(this);
+  	  function.setParameterType(i, paramType);
+  	}
   	return null;
   }
 
   @Override
+  public Type visit(ExpressionList n) {
+    n.expressions.accept(this);
+    return null;
+  }
+
+  @Override
   public Type visit(ParameterDeclaration n) {
-		symbolTable.setVariableType(n.name, n.type);
-  	return n.type;
+    symbolTable.setVariableType(n.name, n.type);
+    return n.type;
   }
 }

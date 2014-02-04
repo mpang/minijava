@@ -1,6 +1,7 @@
 package typechecker.implementation;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -121,9 +122,12 @@ public class SymbolTable extends DefaultIndentable {
       
       // print signature
       out.print("'signature' = (");
-      for (Type type : functionEntry.getValue().functionSignature.parameterTypes) {
-        out.print(type);
-        out.print(", ");
+      Iterator<Type> itr = functionEntry.getValue().functionSignature.getParameterTypes().iterator();
+      while (itr.hasNext()) {
+      	out.print((Type)itr.next());
+      	if (itr.hasNext()) {
+      		out.print(", ");
+      	}
       }
       out.print(") --> ");
       out.println(functionEntry.getValue().functionSignature.returnType);
