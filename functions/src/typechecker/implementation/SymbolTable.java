@@ -124,7 +124,7 @@ public class SymbolTable extends DefaultIndentable {
       out.print("'signature' = (");
       Iterator<Type> itr = functionEntry.getValue().functionSignature.getParameterTypes().iterator();
       while (itr.hasNext()) {
-      	out.print((Type)itr.next());
+      	out.print(itr.next());
       	if (itr.hasNext()) {
       		out.print(", ");
       	}
