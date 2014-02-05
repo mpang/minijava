@@ -149,6 +149,8 @@ public class TypeCheckTest {
 	public void badFunctionCall() throws Exception {
 	  expect(ErrorMessage.arityMismatchError("test", 2, 1),
 	      progWithFunction("int test(int x, int y) { return 1; } i0 = test(3);"));
+	  expect(ErrorMessage.arityMismatchError("test", 2, 3),
+	      progWithFunction("int test(int x, int y) { return 1; } i0 = test(1, 2, 3);"));
 	  expect(typeError("1 < 2", new IntegerType(), new BooleanType()),
 	      progWithFunction("boolean test(int x, int y) { return x < y; } i0 = test(1, 1 < 2);"));
 	}

@@ -221,11 +221,11 @@ public class TypeCheckVisitor implements Visitor<Type> {
     List<Type> paramTypes = symbolTable.lookupFunction(n.name).getParameterTypes();
     if (n.arguments.expressions.size() != paramTypes.size()) {
       errors.arityMismatch(n.name, paramTypes.size(), n.arguments.expressions.size());
-    }
-    
-    for (int i = 0; i < n.arguments.expressions.size(); i++) {
-      // Check FunctionCallExp parameters and match with FunctionSignature
-      check(n.arguments.expressions.elementAt(i), paramTypes.get(i));
+    } else {
+      for (int i = 0; i < n.arguments.expressions.size(); i++) {
+        // Check FunctionCallExp parameters and match with FunctionSignature
+        check(n.arguments.expressions.elementAt(i), paramTypes.get(i));
+      }
     }
     return returnType;
   }
