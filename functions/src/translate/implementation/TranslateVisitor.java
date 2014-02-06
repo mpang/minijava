@@ -1,6 +1,14 @@
 package translate.implementation;
 
-import static ir.tree.IR.*;
+import static ir.tree.IR.CALL;
+import static ir.tree.IR.CMOVE;
+import static ir.tree.IR.ESEQ;
+import static ir.tree.IR.FALSE;
+import static ir.tree.IR.LABEL;
+import static ir.tree.IR.MOVE;
+import static ir.tree.IR.SEQ;
+import static ir.tree.IR.TEMP;
+import static ir.tree.IR.TRUE;
 import static translate.Translator.L_MAIN;
 import ir.frame.Access;
 import ir.frame.Frame;
@@ -221,21 +229,13 @@ public class TranslateVisitor implements Visitor<TRExp> {
     Frame frame = newFrame(Label.get(n.name), n.parameters.parameters.size());
     frames.push(frame);
     envs.push(FunTable.<Access>theEmpty());
-    IRExp exp = null;
     
-    if (n.statements.size() > 0) {
-      IRStm stm = NOP;
-      for (int i = 0; i < n.statements.size(); i++) {
-        stm = SEQ(stm, n.statements.elementAt(i).accept(this).unNx());
-      }
-      
-      exp = ESEQ(stm, n.returnExpression.accept(this).unEx());
-    }
-    else {
-      exp = n.returnExpression.accept(this).unEx();
-    }
-    
+    // body and return statement
+    IRExp exp = n.statements.size() > 0 ? ESEQ(n.statements.accept(this).unNx(),
+                                               n.returnExpression.accept(this).unEx())
+                                        : n.returnExpression.accept(this).unEx();
     frags.add(new ProcFragment(frame, frame.procEntryExit1(MOVE(frame.RV(), exp))));
+    
     frames.pop();
     envs.pop();
     return new Ex(exp);
