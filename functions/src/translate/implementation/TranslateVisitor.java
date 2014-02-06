@@ -1,14 +1,6 @@
 package translate.implementation;
 
-import static ir.tree.IR.CALL;
-import static ir.tree.IR.CMOVE;
-import static ir.tree.IR.ESEQ;
-import static ir.tree.IR.FALSE;
-import static ir.tree.IR.LABEL;
-import static ir.tree.IR.MOVE;
-import static ir.tree.IR.SEQ;
-import static ir.tree.IR.TEMP;
-import static ir.tree.IR.TRUE;
+import static ir.tree.IR.*;
 import static translate.Translator.L_MAIN;
 import ir.frame.Access;
 import ir.frame.Frame;
@@ -220,7 +212,25 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(FunctionDeclaration n) {
-    throw new Error("Not implemented");
+    Frame oldFrame = frame;
+    frame = newFrame(Label.get(n.name), n.parameters.parameters.size());
+    IRExp exp = null;
+    
+    if (n.statements.size() > 0) {
+      IRStm stm = NOP;
+      for (int i = 0; i < n.statements.size(); i++) {
+        stm = SEQ(stm, n.statements.elementAt(i).accept(this).unNx());
+      }
+      
+      exp = ESEQ(stm, n.returnExpression.accept(this).unEx());
+    }
+    else {
+      exp = n.returnExpression.accept(this).unEx();
+    }
+    
+    frags.add(new ProcFragment(frame, frame.procEntryExit1(MOVE(frame.RV(), exp))));
+    frame = oldFrame;
+    return new Ex(exp);
   }
 
   @Override
