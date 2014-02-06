@@ -1,5 +1,6 @@
 package translate.implementation;
 
+import static ir.tree.IR.CALL;
 import static ir.tree.IR.CMOVE;
 import static ir.tree.IR.ESEQ;
 import static ir.tree.IR.FALSE;
@@ -16,6 +17,7 @@ import ir.temp.Temp;
 import ir.tree.BINOP.Op;
 import ir.tree.CJUMP.RelOp;
 import ir.tree.IR;
+import ir.tree.IRExp;
 import ir.tree.IRStm;
 import ir.tree.TEMP;
 import translate.Fragments;
@@ -23,6 +25,7 @@ import translate.ProcFragment;
 import translate.Translator;
 import typechecker.implementation.SymbolTable;
 import util.FunTable;
+import util.List;
 import visitor.Visitor;
 import ast.*;
 
@@ -222,7 +225,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(FunctionCallExp n) {
-    throw new Error("Not implemented");
+    List<IRExp> args = List.empty();
+    for (int i = 0; i < n.arguments.expressions.size(); i++) {
+      args.add(n.arguments.expressions.elementAt(i).accept(this).unEx());
+    }
+    return new Ex(CALL(Label.get(n.name), args));
   }
 
   @Override
