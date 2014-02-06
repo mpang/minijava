@@ -12,6 +12,10 @@ import ir.tree.IR;
 import ir.tree.IRExp;
 import ir.tree.IRStm;
 import ir.tree.TEMP;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 import translate.Fragments;
 import translate.ProcFragment;
 import translate.Translator;
@@ -45,12 +49,14 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	 * on the target architecture.
 	 */
 	private Frame frameFactory;
-	private Frame frame;
-	private FunTable<Access> currentEnv;
+	private Deque<Frame> frames; // stack of frames
+	private Deque<FunTable<Access>> envs; // stack of envs to preserve scoping
 
 	public TranslateVisitor(SymbolTable table, Frame frameFactory) {
 		this.frags = new Fragments(frameFactory);
 		this.frameFactory = frameFactory;
+		frames = new ArrayDeque<Frame>();
+		envs = new ArrayDeque<FunTable<Access>>();
 	}
 
 	/////// Helpers //////////////////////////////////////////////
@@ -63,7 +69,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	}
 
 	private void putEnv(String name, Access access) {
-		currentEnv = currentEnv.insert(name, access);
+	  envs.push(envs.pop().insert(name, access));
 	}
 
 	////// Visitor ///////////////////////////////////////////////
@@ -80,15 +86,14 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(Program n) {
-		frame = newFrame(L_MAIN, 0);
-		currentEnv = FunTable.theEmpty();
+		frames.push(newFrame(L_MAIN, 0));
+		envs.push(FunTable.<Access>theEmpty());
 		TRExp statements = n.statements.accept(this);
 		TRExp print = n.print.accept(this);
 		IRStm body = IR.SEQ(
 				statements.unNx(),
 				print.unNx());
-//		body = frame.procEntryExit1(body);
-		frags.add(new ProcFragment(frame, body));
+		frags.add(new ProcFragment(frames.peek(), body));
 		return null;
 	}
 
@@ -115,6 +120,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(Assign n) {
+	  Frame frame = frames.peek();
 		Access var = frame.allocLocal(false);
 		putEnv(n.name, var);
 		TRExp val = n.value.accept(this);
@@ -165,8 +171,8 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(IdentifierExp n) {
-		Access var = currentEnv.lookup(n.name);
-		return new Ex(var.exp(frame.FP()));
+		Access var = envs.peek().lookup(n.name);
+		return new Ex(var.exp(frames.peek().FP()));
 	}
 
 	@Override
@@ -212,8 +218,9 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(FunctionDeclaration n) {
-    Frame oldFrame = frame;
-    frame = newFrame(Label.get(n.name), n.parameters.parameters.size());
+    Frame frame = newFrame(Label.get(n.name), n.parameters.parameters.size());
+    frames.push(frame);
+    envs.push(FunTable.<Access>theEmpty());
     IRExp exp = null;
     
     if (n.statements.size() > 0) {
@@ -229,7 +236,8 @@ public class TranslateVisitor implements Visitor<TRExp> {
     }
     
     frags.add(new ProcFragment(frame, frame.procEntryExit1(MOVE(frame.RV(), exp))));
-    frame = oldFrame;
+    frames.pop();
+    envs.pop();
     return new Ex(exp);
   }
 
