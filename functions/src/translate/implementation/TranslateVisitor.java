@@ -3,6 +3,7 @@ package translate.implementation;
 import static ir.tree.IR.CMOVE;
 import static ir.tree.IR.ESEQ;
 import static ir.tree.IR.FALSE;
+import static ir.tree.IR.LABEL;
 import static ir.tree.IR.MOVE;
 import static ir.tree.IR.SEQ;
 import static ir.tree.IR.TEMP;
@@ -23,28 +24,7 @@ import translate.Translator;
 import typechecker.implementation.SymbolTable;
 import util.FunTable;
 import visitor.Visitor;
-import ast.AST;
-import ast.Assign;
-import ast.BooleanType;
-import ast.Conditional;
-import ast.Expression;
-import ast.ExpressionList;
-import ast.FormalList;
-import ast.FunctionCallExp;
-import ast.FunctionDeclaration;
-import ast.IdentifierExp;
-import ast.IntegerLiteral;
-import ast.IntegerType;
-import ast.LessThan;
-import ast.Minus;
-import ast.NodeList;
-import ast.Not;
-import ast.ParameterDeclaration;
-import ast.Plus;
-import ast.Print;
-import ast.Program;
-import ast.Times;
-import ast.UnknownType;
+import ast.*;
 
 
 /**
@@ -221,10 +201,18 @@ public class TranslateVisitor implements Visitor<TRExp> {
 		TRExp f = n.e3.accept(this);
 
 		TEMP v = TEMP(new Temp());
-		return new Ex(ESEQ( SEQ( 
-				MOVE(v, f.unEx()),
-				CMOVE(RelOp.EQ, c.unEx(), TRUE, v, t.unEx())),
-				v));
+		Label trueLabel = Label.gen();
+		Label falseLabel = Label.gen();
+		Label jointLabel = Label.gen(); // to prevent from executing false label after executing true label
+		
+		return new Ex(ESEQ(SEQ(c.unCx(trueLabel, falseLabel),
+		                       SEQ(LABEL(trueLabel),
+                               MOVE(v, t.unEx()),
+                               IR.JUMP(jointLabel)),
+                           SEQ(LABEL(falseLabel),
+                               MOVE(v, f.unEx())),
+                           LABEL(jointLabel)),
+		                   v));
 	}
 
   @Override
