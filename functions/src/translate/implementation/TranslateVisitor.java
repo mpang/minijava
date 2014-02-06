@@ -1,14 +1,6 @@
 package translate.implementation;
 
-import static ir.tree.IR.CALL;
-import static ir.tree.IR.CMOVE;
-import static ir.tree.IR.ESEQ;
-import static ir.tree.IR.FALSE;
-import static ir.tree.IR.LABEL;
-import static ir.tree.IR.MOVE;
-import static ir.tree.IR.SEQ;
-import static ir.tree.IR.TEMP;
-import static ir.tree.IR.TRUE;
+import static ir.tree.IR.*;
 import static translate.Translator.L_MAIN;
 import ir.frame.Access;
 import ir.frame.Frame;
@@ -230,15 +222,17 @@ public class TranslateVisitor implements Visitor<TRExp> {
     frames.push(frame);
     envs.push(FunTable.<Access>theEmpty());
     
+    // params
+    n.parameters.accept(this);
     // body and return statement
     IRExp exp = n.statements.size() > 0 ? ESEQ(n.statements.accept(this).unNx(),
                                                n.returnExpression.accept(this).unEx())
                                         : n.returnExpression.accept(this).unEx();
-    frags.add(new ProcFragment(frame, frame.procEntryExit1(MOVE(frame.RV(), exp))));
     
+    frags.add(new ProcFragment(frame, frame.procEntryExit1(MOVE(frame.RV(), exp))));
     frames.pop();
     envs.pop();
-    return new Ex(exp);
+    return new Nx(NOP);
   }
 
   @Override
@@ -252,7 +246,10 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(FormalList n) {
-    throw new Error("Not implemented");
+    for (int i = 0; i < n.parameters.size(); i++) {
+      putEnv(n.parameters.elementAt(i).name, frames.peek().getFormal(i));
+    }
+    return new Nx(NOP);
   }
 
   @Override
