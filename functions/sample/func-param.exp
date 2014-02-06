@@ -1,0 +1,4 @@
+int test(int x, int y) {
+return x < y ? 1 : 0;
+}
+print test(1, 5)
