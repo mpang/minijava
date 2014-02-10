@@ -62,6 +62,10 @@ implements Iterable<Entry<String, V>>, Lookup<V>
 		map.put(id, value);
 	}
 
+	public boolean containsKey(String key) {
+    return map.containsKey(key);
+  }
+	
 	/**
 	 * Find an entry in the table. If no entry is found, null is returned.
 	 */
