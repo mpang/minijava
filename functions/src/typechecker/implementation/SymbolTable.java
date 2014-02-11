@@ -54,7 +54,7 @@ public class SymbolTable extends DefaultIndentable {
    * @return type of that variable
    */
   public Type lookupVariable(String name) {
-    boolean inFunctionScope = currentFunction != null && currentFunction.variables.containsKey(name);
+    boolean inFunctionScope = currentFunction != null && currentFunction.variables.lookup(name) != null;
     return inFunctionScope ? currentFunction.variables.lookup(name) : globalVariables.lookup(name);
   }
   
