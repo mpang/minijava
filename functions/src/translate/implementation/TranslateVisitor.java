@@ -132,20 +132,15 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	  TRExp val = n.value.accept(this);
 		
 	  if (frame.equals(frames.peekLast())) {
-		System.out.println("Setting global variable: " + n.name);
-		List<IRExp> data = List.empty();
-	  	data.add(val.unEx());
-	  	IRData decl = IR.DATA(Label.get(n.name), data);
-		Fragment g = new DataFragment(frame, decl);
-		frags.add(g);
-		
-//		System.out.println("Label "+n.name+": " + new Ex(IR.NAME(Label.get(n.name))));
-//		System.out.println("MEM: " + new Ex(IR.MEM(IR.NAME(Label.get(n.name)))));
-//		System.out.println("varf: " + new Ex(var.exp(frame.FP())));
-		
-		return new Nx(IR.MOVE(var.exp(frame.FP()), IR.NAME(Label.get(n.name))));
+	    // System.out.println("Setting global variable: " + n.name);
+	    List<IRExp> data = List.empty();
+	    data.add(val.unEx());
+	    IRData decl = IR.DATA(Label.get(n.name), data);
+	    Fragment g = new DataFragment(frame, decl);
+	    frags.add(g);
+		  return new Nx(IR.MOVE(var.exp(frame.FP()), IR.NAME(Label.get(n.name))));
 	  } else {
-		System.out.println("Setting local  variable: " + n.name);
+	    // System.out.println("Setting local  variable: " + n.name);
 	    return new Nx(IR.MOVE(var.exp(frame.FP()), val.unEx()));
 	  }
 	}
@@ -198,11 +193,18 @@ public class TranslateVisitor implements Visitor<TRExp> {
 		Access var = envs.peek().lookup(n.name);
 		
 		if (var == null && !frame.equals(frames.peekLast())) {
+		  // Within function frame... look at global variables
 			var = envs.peekLast().lookup(n.name);
-			return new Ex(IR.MEM(var.exp(frames.peekLast().FP())));	
+			if (var == null) {
+			  return null;
+			} else {
+			  return new Ex(IR.MEM(IR.NAME(Label.get(n.name))));  
+			}
 		} else if (frame.equals(frames.peekLast())) {
+		  // Within global frame... dereference MEM addresses
 			return new Ex(IR.MEM(var.exp(frame.FP())));
 		} else {
+		  // Within function frame... look at local variables
 			return new Ex(var.exp(frame.FP()));
 		}
 	}
