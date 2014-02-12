@@ -9,6 +9,7 @@ import ir.temp.Temp;
 import ir.tree.BINOP.Op;
 import ir.tree.CJUMP.RelOp;
 import ir.tree.IR;
+import ir.tree.IRData;
 import ir.tree.IRExp;
 import ir.tree.IRStm;
 import ir.tree.TEMP;
@@ -16,9 +17,12 @@ import ir.tree.TEMP;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import translate.DataFragment;
+import translate.Fragment;
 import translate.Fragments;
 import translate.ProcFragment;
 import translate.Translator;
+import translate.TranslatorLabels;
 import typechecker.implementation.SymbolTable;
 import util.FunTable;
 import util.List;
@@ -94,6 +98,8 @@ public class TranslateVisitor implements Visitor<TRExp> {
 				statements.unNx(),
 				print.unNx());
 		frags.add(new ProcFragment(frames.peek(), body));
+		envs.pop();
+		frames.pop();
 		return null;
 	}
 
@@ -121,10 +127,27 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	@Override
 	public TRExp visit(Assign n) {
 	  Frame frame = frames.peek();
-		Access var = frame.allocLocal(false);
-		putEnv(n.name, var);
-		TRExp val = n.value.accept(this);
-		return new Nx(IR.MOVE(var.exp(frame.FP()), val.unEx()));
+	  Access var = frame.allocLocal(false);
+	  putEnv(n.name, var);
+	  TRExp val = n.value.accept(this);
+		
+	  if (frame.equals(frames.peekLast())) {
+		System.out.println("Setting global variable: " + n.name);
+		List<IRExp> data = List.empty();
+	  	data.add(val.unEx());
+	  	IRData decl = IR.DATA(Label.get(n.name), data);
+		Fragment g = new DataFragment(frame, decl);
+		frags.add(g);
+		
+//		System.out.println("Label "+n.name+": " + new Ex(IR.NAME(Label.get(n.name))));
+//		System.out.println("MEM: " + new Ex(IR.MEM(IR.NAME(Label.get(n.name)))));
+//		System.out.println("varf: " + new Ex(var.exp(frame.FP())));
+		
+		return new Nx(IR.MOVE(var.exp(frame.FP()), IR.NAME(Label.get(n.name))));
+	  } else {
+		System.out.println("Setting local  variable: " + n.name);
+	    return new Nx(IR.MOVE(var.exp(frame.FP()), val.unEx()));
+	  }
 	}
 
 	@Override
@@ -171,8 +194,17 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(IdentifierExp n) {
+		Frame frame = frames.peek();
 		Access var = envs.peek().lookup(n.name);
-		return new Ex(var.exp(frames.peek().FP()));
+		
+		if (var == null && !frame.equals(frames.peekLast())) {
+			var = envs.peekLast().lookup(n.name);
+			return new Ex(IR.MEM(var.exp(frames.peekLast().FP())));	
+		} else if (frame.equals(frames.peekLast())) {
+			return new Ex(IR.MEM(var.exp(frame.FP())));
+		} else {
+			return new Ex(var.exp(frame.FP()));
+		}
 	}
 
 	@Override
@@ -240,7 +272,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
     List<IRExp> args = List.empty();
     for (int i = 0; i < n.arguments.expressions.size(); i++) {
       args.add(n.arguments.expressions.elementAt(i).accept(this).unEx());
-    }
+    }	
     return new Ex(CALL(Label.get(n.name), args));
   }
 
