@@ -22,7 +22,6 @@ import translate.Fragment;
 import translate.Fragments;
 import translate.ProcFragment;
 import translate.Translator;
-import translate.TranslatorLabels;
 import typechecker.implementation.SymbolTable;
 import util.FunTable;
 import util.List;
@@ -130,14 +129,14 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	  Access var = frame.allocLocal(false);
 	  putEnv(n.name, var);
 	  TRExp val = n.value.accept(this);
-		
+	  
 	  if (frame.equals(frames.peekLast())) {
 	    // System.out.println("Setting global variable: " + n.name);
 	    List<IRExp> data = List.empty();
 	    data.add(val.unEx());
 	    IRData decl = IR.DATA(Label.get(n.name), data);
-	    Fragment g = new DataFragment(frame, decl);
-	    frags.add(g);
+	    Fragment global = new DataFragment(frame, decl);
+	    frags.add(global);
 		  return new Nx(IR.MOVE(var.exp(frame.FP()), IR.NAME(Label.get(n.name))));
 	  } else {
 	    // System.out.println("Setting local  variable: " + n.name);
@@ -145,18 +144,18 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	  }
 	}
 
-	@Override
-	public TRExp visit(LessThan n) {
-		TRExp l = n.e1.accept(this);
-		TRExp r = n.e2.accept(this);
+  @Override
+  public TRExp visit(LessThan n) {
+    TRExp l = n.e1.accept(this);
+    TRExp r = n.e2.accept(this);
 
-		TEMP v = TEMP(new Temp());
-		return new Ex(ESEQ( SEQ( 
-				MOVE(v, FALSE),
-				CMOVE(RelOp.LT, l.unEx(), r.unEx(), v, TRUE)),
-				v));
-	}
-
+    TEMP v = TEMP(new Temp());
+    return new Ex(ESEQ( SEQ( 
+        MOVE(v, FALSE),
+        CMOVE(RelOp.LT, l.unEx(), r.unEx(), v, TRUE)),
+        v));
+  }
+  
 	//////////////////////////////////////////////////////////////
 
 	private TRExp numericOp(Op op, Expression e1, Expression e2) {
@@ -192,20 +191,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
 		Frame frame = frames.peek();
 		Access var = envs.peek().lookup(n.name);
 		
-		if (var == null && !frame.equals(frames.peekLast())) {
-		  // Within function frame... look at global variables
-			var = envs.peekLast().lookup(n.name);
-			if (var == null) {
-			  return null;
-			} else {
-			  return new Ex(IR.MEM(IR.NAME(Label.get(n.name))));  
-			}
-		} else if (frame.equals(frames.peekLast())) {
-		  // Within global frame... dereference MEM addresses
-			return new Ex(IR.MEM(var.exp(frame.FP())));
+		if (frame.equals(frames.peekLast()) || 
+		    (var == null && !frame.equals(frames.peekLast()))) {
+		  return new Ex(IR.MEM(IR.NAME(Label.get(n.name))));
 		} else {
-		  // Within function frame... look at local variables
-			return new Ex(var.exp(frame.FP()));
+		  return new Ex(var.exp(frame.FP()));
 		}
 	}
 
