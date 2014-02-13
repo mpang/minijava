@@ -126,14 +126,13 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	@Override
 	public TRExp visit(Assign n) {
 	  Frame frame = frames.peek();
-	  Access var = frame.allocLocal(false);
-	  putEnv(n.name, var);
 	  TRExp val = n.value.accept(this);
 	  
 	  if (frame.equals(frames.peekLast())) {
-		// Create default IRData (not supporting arrays)
+		// The "last" frame is the first frame (i.e. main())
+		// Create default IRData (not supporting arrays currently...)
 		List<IRExp> data = List.empty();
-	    data.add(CONST(0));
+	    data.add(CONST(0)); // Filling in with default value
 	    IRData irdata = DATA(Label.get(n.name), data);
 
 	    // Creating DataFragment and adding
@@ -144,7 +143,9 @@ public class TranslateVisitor implements Visitor<TRExp> {
 		return new Nx(MOVE(MEM(NAME(Label.get(n.name))), val.unEx()));
 	  } else {
 		// Place local variable into local frame
-	    return new Nx(MOVE(var.exp(frame.FP()), val.unEx()));
+		Access var = frame.allocLocal(false);
+	    putEnv(n.name, var);
+		return new Nx(MOVE(var.exp(frame.FP()), val.unEx()));
 	  }
 	}
 
