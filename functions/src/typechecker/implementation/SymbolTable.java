@@ -64,7 +64,8 @@ public class SymbolTable extends DefaultIndentable {
    * @return return signature of that function
    */
   public FunctionSignature lookupFunction(String name) {
-    return functions.lookup(name).functionSignature;
+    FunctionEntry functionEntry = functions.lookup(name);
+    return functionEntry == null ? null : functionEntry.functionSignature;
   }
   
   /**
