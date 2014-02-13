@@ -107,6 +107,24 @@ public class TestTranslate {
 		);
 	}
 	
+	// Inefficient fibonnaci formula... for testing more dynamically
+	public static int fib(int n) {
+		return n < 2 ? n : fib(n-1) + fib(n-2);
+	}
+	
+	@Test public void fibonnaci() throws Exception {
+		int r = (int) (Math.random() * 10); // Range from [0-10]
+		
+		test( fib(r) + "\n",
+				"int fib(int n) {\n" +
+				"  return n < 2 ? n : fib(n-1) + fib(n-2);\n" +
+				"}\n" +
+				"print fib("+r+")"
+		);
+	}
+	
+
+	
 //	@Test public void complexBranches() throws Exception {
 //		//Trying to create a program that has many choices... so many traces.
 //		//We want to work the trace schedule to a point where it actually 
