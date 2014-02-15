@@ -119,7 +119,27 @@ Expression ArrayExpression() : {
   array = Expression()
   (    < LENGTH >    { return new ArrayLength(array); }  | < LBRACKET >
   	index = Expression()
-  	< RBRACKET >  	{ return new ArrayLookup(array, index); }   )}
+  	< RBRACKET >  	{ return new ArrayLookup(array, index); }  )}
+
+Expression Call() : {
+  Expression object;
+  String id;
+  List<Expression> rands = new ArrayList<Expression>();
+  Expression arg;}{
+  object = Expression()
+  < DOT >
+  id = Identifier()
+  < LPAREN >
+  (
+    arg = Expression()
+    { rands.add(arg); }
+  	(
+  	  < COMMA >
+  	  arg = Expression()
+      { rands.add(arg); }
+    )*
+  )?
+  < RPAREN >  { return new Call(object, id, new NodeList<Expression>(rands)); }}
 
 Expression PrimaryExpression() : {
   Token t;
@@ -134,7 +154,7 @@ Expression PrimaryExpression() : {
   	e = Expression()
   	< RBRACKET >
   	{ return new NewArray(e); }
-   )| t = < INTEGER_LITERAL >  { return new IntegerLiteral(t.image); }| t = < BOOLEAN_LITERAL >
+  )| t = < INTEGER_LITERAL >  { return new IntegerLiteral(t.image); }| t = < BOOLEAN_LITERAL >
   { return new BooleanLiteral(t.image); }
 | t = < IDENTIFIER >  { return new IdentifierExp(t.image); }| < THIS >  { return new This(); }
 | < LPAREN >
