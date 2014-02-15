@@ -106,3 +106,12 @@ Type Type() : {
   { return new BooleanType(); }
 | i = < IDENTIFIER >
   { return new ObjectType(i.image); }}
+
+VarDecl VarDecl(VarDecl.Kind kind) : {
+  Type type;
+  String name;}
+{
+  type = Type()
+  name = Identifier()
+  < SEMICOLON >
+  { return new VarDecl(kind, type, name); }}
