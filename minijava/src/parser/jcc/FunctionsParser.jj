@@ -93,12 +93,12 @@ Type Type() : {
   Token i;
 }
 {
+  LOOKAHEAD(2)
   < INT >
-  (    < LBRACKET >
-    < RBRACKET >
-    { return new IntArrayType(); }  )?
-  { return new IntegerType(); }
-| < BOOLEAN >
+  < LBRACKET >
+  < RBRACKET >
+  { return new IntArrayType(); }| < INT >
+  { return new IntegerType(); }| < BOOLEAN >
   { return new BooleanType(); }
 | i = < IDENTIFIER >
   { return new ObjectType(i.image); }}
@@ -111,3 +111,30 @@ VarDecl VarDecl(VarDecl.Kind kind) : {
   name = Identifier()
   < SEMICOLON >
   { return new VarDecl(kind, type, name); }}
+
+Expression Expression() : {}{
+  {    return null;  }}
+
+Expression PrimaryExpression() : {
+  Token t;
+  Expression e;}
+{
+  LOOKAHEAD(2)
+  < NEW >
+  < INT >
+  < LBRACKET >
+  e = Expression()
+  < RBRACKET >
+  { return new NewArray(e); }
+| < NEW >
+  t = < IDENTIFIER >
+  < LPAREN >
+  < RPAREN >
+  { return new NewObject(t.image); }
+| t = < INTEGER_LITERAL >  { return new IntegerLiteral(t.image); }| t = < BOOLEAN_LITERAL >
+  { return new BooleanLiteral(t.image); }
+| t = < IDENTIFIER >  { return new IdentifierExp(t.image); }| < THIS >  { return new This(); }
+| < LPAREN >
+  e = Expression()
+  < RPAREN >  { return e; }
+}
