@@ -59,8 +59,7 @@ TOKEN : /* SEPARATORS and OPERATORS*/
 | < MINUS: "-" >
 | < MULT: "*" >
 | < AND: "&&" >
-| < OR: "||" >
-| < SMALLER: "<" >
+| < LESS: "<" >
 | < NOT: "!" >
 | < SEMICOLON: ";" >
 | < COMMA: "," >
@@ -110,38 +109,72 @@ VarDecl VarDecl(VarDecl.Kind kind) : {
   < SEMICOLON >
   { return new VarDecl(kind, type, name); }}
 
-Expression Expression() : {}{
-  {    return null;  }}
+Expression Expression() : {
+  Expression e1, e2;}{
+  e1 = CompareExpression()
+  (    < AND >
+    e2 = CompareExpression()
+    { e1 = new And(e1, e2); }  )*
+  { return e1; }}
 
-Expression ArrayExpression() : {
-  Expression array;
-  Expression index;}{
-  array = Expression()
-  (    < LENGTH >    { return new ArrayLength(array); }  | < LBRACKET >
-  	index = Expression()
-  	< RBRACKET >  	{ return new ArrayLookup(array, index); }  )}
+Expression CompareExpression() : {
+  Expression e1, e2;}{
+  e1 = AddExpression()
+  (    < LESS >
+    e2 = AddExpression()
+    { e1 = new LessThan(e1, e2); }
+  )?  { return e1; }}
 
-Expression Call() : {
-  Expression object;
-  String id;
-  List<Expression> rands = new ArrayList<Expression>();
-  Expression arg;}{
-  object = Expression()
-  < DOT >
-  id = Identifier()
-  < LPAREN >
-  (
-    arg = Expression()
-    { rands.add(arg); }
-  	(
-  	  < COMMA >
-  	  arg = Expression()
-      { rands.add(arg); }
-    )*
-  )?
-  < RPAREN >  { return new Call(object, id, new NodeList<Expression>(rands)); }}
+Expression AddExpression() : {
+  Expression e1, e2;}{
+  e1 = MultExpression()
+  (    < PLUS >
+    e2 = MultExpression()
+    { e1 = new Plus(e1, e2); }  | < MINUS >
+  	e2 = MultExpression()  	{ e1 = new Minus(e1, e2); }  )*
+  { return e1; }}
+
+Expression MultExpression() : {
+  Expression e1, e2;}{
+  e1 = NotExpression()
+  (    < MULT >
+    e2 = NotExpression()
+    { e1 = new Times(e1, e2); }  )*
+  { return e1; }}
+
+Expression NotExpression() : {
+  Expression e;}{
+  < NOT >
+  e = NotExpression()
+  { return new Not(e); }| e = PrimaryExpression()  { return e; }}
 
 Expression PrimaryExpression() : {
+  Expression e;
+  Expression index;
+  String id;
+  List<Expression> args = new ArrayList<Expression>();
+  Expression arg;}{
+  e = ElementaryExpression()
+  (    < LENGTH >    { return new ArrayLength(e); }  | < LBRACKET >
+  	index = Expression()
+  	< RBRACKET >  	{ return new ArrayLookup(e, index); }
+  | < DOT >
+  	id = Identifier()
+  	< LPAREN >
+  	(
+      arg = Expression()
+      { args.add(arg); }
+  	  (
+  	    < COMMA >
+  	    arg = Expression()
+        { args.add(arg); }
+      )*
+    )?
+    < RPAREN >
+    { return new Call(e, id, new NodeList<Expression>(args)); }
+  | { return e; }  )}
+
+Expression ElementaryExpression() : {
   Token t;
   Expression e;}
 {
