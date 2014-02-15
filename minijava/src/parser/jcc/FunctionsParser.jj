@@ -69,6 +69,7 @@ TOKEN : /* SEPARATORS and OPERATORS*/
 | < DOT: "." >
 | < LBRACKET: "[" >
 | < RBRACKET: "]" >
+| < LENGTH: ".length" >
 }
 	
 TOKEN :	/* LITERALS */
@@ -113,6 +114,14 @@ VarDecl VarDecl(VarDecl.Kind kind) : {
 
 Expression Expression() : {}{
   {    return null;  }}
+
+Expression ArrayExpression() : {
+  Expression array;
+  Expression index;}{
+  array = Expression()
+  (    < LENGTH >    { return new ArrayLength(array); }  | < LBRACKET >
+  	index = Expression()
+  	< RBRACKET >  	{ return new ArrayLookup(array, index); }   )}
 
 Expression PrimaryExpression() : {
   Token t;
