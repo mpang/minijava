@@ -89,19 +89,15 @@ String Identifier() : {
   { return i.image; }
 }
 
-Type IntOrIntArray() : {
-}
-{  < LBRACKET >
-  < RBRACKET >
-  { return new IntArrayType(); }
-| { return new IntegerType(); }}
-
 Type Type() : {
   Token i;
 }
 {
   < INT >
-  { return IntOrIntArray(); }
+  (    < LBRACKET >
+    < RBRACKET >
+    { return new IntArrayType(); }  )?
+  { return new IntegerType(); }
 | < BOOLEAN >
   { return new BooleanType(); }
 | i = < IDENTIFIER >
