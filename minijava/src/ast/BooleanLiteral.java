@@ -10,6 +10,10 @@ public class BooleanLiteral extends Expression {
 		super();
 		this.value = value;
 	}
+	
+	public BooleanLiteral(String image) {
+	  this(Boolean.parseBoolean(image));
+	}
 
 	@Override
 	public <R> R accept(Visitor<R> v) {
