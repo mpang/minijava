@@ -75,7 +75,6 @@ TOKEN :	/* LITERALS */
 {
   < INTEGER_LITERAL: ( <DIGIT> )+ >
 | < BOOLEAN_LITERAL: "true" | "false" >
-| < NULL: "null" >
 | < IDENTIFIER: <LETTER> (<LETTER> | "_" | <DIGIT>)* >
 | < #LETTER: ["A" - "Z", "a" - "z"] >
 | < #DIGIT: ["0" - "9"] >
