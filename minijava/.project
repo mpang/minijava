@@ -10,6 +10,12 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+                <buildCommand>
+			<name>sf.eclipse.javacc.javaccbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
