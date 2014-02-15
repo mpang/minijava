@@ -29,10 +29,22 @@ SKIP :
 }
 
 TOKEN : /* KEYWORDS */
-{	
-	< PRINT: "print" >
+{
+  	< CLASS: "class" >
+| 	< PUBLIC: "public" >
+| 	< STATIC: "static" >
+| 	< VOID: "void" >
+| 	< MAIN: "main" >
+| 	< EXTENDS: "extends" >
+| 	< IF: "if" >
+| 	< ELSE: "else" >
+| 	< WHILE: "while" >
+| 	< THIS: "this" >
+| 	< NEW: "new" >
+| 	< PRINT: "System.out.println" >
 |  	< INT: "int" >
 | 	< BOOLEAN: "boolean" >
+| 	< STRING: "String" >
 | 	< RETURN: "return" >
 }
 
@@ -46,16 +58,23 @@ TOKEN : /* SEPARATORS and OPERATORS*/
 |	< PLUS: "+" >
 |	< MINUS: "-" >
 |	< MULT: "*" >
+| 	< AND: "&&" >
+| 	< OR: "||" >
 |	< SMALLER: "<" >
 |	< NOT: "!" >
 | 	< SEMICOLON: ";" >
 | 	< COMMA: "," >
 | 	< LBRACE: "{" >
 | 	< RBRACE: "}" >
+| 	< DOT: "." >
+| 	< LBRACKET: "[" >
+| 	< RBRACKET: "]" >
 }
 	
-TOKEN :
+TOKEN :	/* LITERALS */
 {   < INTEGER_LITERAL: ( <DIGIT> )+ >
+| 	< BOOLEAN_LITERAL: "true" | "false" >
+| 	< NULL: "null" >
 |   < IDENTIFIER: <LETTER> (<LETTER> | "_" | <DIGIT>)* >
 |   < #LETTER: ["A" - "Z", "a" - "z"] >
 |   < #DIGIT: ["0" - "9"] >
