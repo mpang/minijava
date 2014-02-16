@@ -1,11 +1,10 @@
 package visitor;
 
 import java.io.PrintWriter;
+import java.util.Iterator;
 
 import util.IndentingWriter;
 import ast.*;
-
-
 
 /**
  * This is an adaptation of the PrettyPrintVisitor from the textbook
@@ -32,7 +31,9 @@ public class PrettyPrintVisitor implements Visitor<Void> {
 
 	@Override
 	public Void visit(Program n) {
-	  throw new Error("Not implemented");
+	  n.mainClass.accept(this);
+	  n.classes.accept(this);
+	  return null;
 	}
 
 	@Override
@@ -49,9 +50,9 @@ public class PrettyPrintVisitor implements Visitor<Void> {
 
 	@Override
 	public Void visit(Print n) {
-		out.print("print ");
+		out.print("System.out.println(");
 		n.exp.accept(this);
-		out.println();
+		out.println(")");
 		return null;
 	}
 
@@ -105,7 +106,7 @@ public class PrettyPrintVisitor implements Visitor<Void> {
 
 	@Override
 	public Void visit(IntegerLiteral n) {
-		out.print(""+n.value);
+		out.print("" + n.value);
 		return null;
 	}
 
@@ -132,91 +133,189 @@ public class PrettyPrintVisitor implements Visitor<Void> {
 
   @Override
   public Void visit(MainClass n) {
-    throw new Error("Not implemented");
+    out.println("class " + n.className + " {");
+    out.indent();
+    out.println("public static void main(String[] " + n.argName + ") {");
+    out.indent();
+    n.statement.accept(this);
+    out.outdent();
+    out.println("}");
+    out.outdent();
+    out.println("}");
+    return null;
   }
 
   @Override
   public Void visit(ClassDecl n) {
-    throw new Error("Not implemented");
+    out.print("class " + n.name);
+    if (!n.superName.isEmpty()) {
+      out.print(" extends " + n.superName);
+    }
+    out.println(" {");
+    out.indent();
+    n.vars.accept(this);
+    n.methods.accept(this);
+    out.outdent();
+    out.println("}");
+    return null;
   }
 
   @Override
   public Void visit(MethodDecl n) {
-    throw new Error("Not implemented");
+    out.print("public ");
+    n.returnType.accept(this);
+    out.print(" " + n.name + "(");
+    // formals
+    Iterator<VarDecl> formalIterator = n.formals.iterator();
+    while (formalIterator.hasNext()) {
+      VarDecl formal = formalIterator.next();
+      formal.accept(this);
+      if (formalIterator.hasNext()) {
+        out.print(", ");
+      }
+    }
+    out.println(") {");
+    
+    // local variables and body
+    out.indent();
+    n.vars.accept(this);
+    n.statements.accept(this);
+    out.print("return ");
+    n.returnExp.accept(this);
+    out.println(";");
+    out.outdent();
+    out.println("}");
+    return null;
   }
 
   @Override
   public Void visit(VarDecl n) {
-    throw new Error("Not implemented");
+    n.type.accept(this);
+    out.print(" " + n.name);
+    if (n.kind != VarDecl.Kind.FORMAL) {
+      out.println(";");
+    }
+    return null;
   }
 
   @Override
   public Void visit(IntArrayType n) {
-    throw new Error("Not implemented");
+    out.print("int[]");
+    return null;
   }
 
   @Override
   public Void visit(ObjectType n) {
-    throw new Error("Not implemented");
+    out.print(n.name);
+    return null;
   }
 
   @Override
   public Void visit(Block n) {
-    throw new Error("Not implemented");
+    out.println("{");
+    out.indent();
+    n.statements.accept(this);
+    out.outdent();
+    out.println("}");
+    return null;
   }
 
   @Override
   public Void visit(If n) {
-    throw new Error("Not implemented");
+    out.print("if (");
+    n.tst.accept(this);
+    out.print(") ");
+    n.thn.accept(this);
+    out.print("else ");
+    n.els.accept(this);
+    out.println();
+    return null;
   }
 
   @Override
   public Void visit(While n) {
-    throw new Error("Not implemented");
+    out.print("while (");
+    n.tst.accept(this);
+    out.print(") ");
+    n.body.accept(this);
+    out.println();
+    return null;
   }
 
   @Override
   public Void visit(ArrayAssign n) {
-    throw new Error("Not implemented");
+    out.print(n.name + "[");
+    n.index.accept(this);
+    out.print("] = ");
+    n.value.accept(this);
+    out.println(";");
+    return null;
   }
 
   @Override
   public Void visit(BooleanLiteral n) {
-    throw new Error("Not implemented");
+    out.print("" + n.value);
+    return null;
   }
 
   @Override
   public Void visit(And n) {
-    throw new Error("Not implemented");
+    n.e1.accept(this);
+    out.print(" && ");
+    n.e2.accept(this);
+    return null;
   }
 
   @Override
   public Void visit(ArrayLength n) {
-    throw new Error("Not implemented");
+    n.array.accept(this);
+    out.print(".length");
+    return null;
   }
 
   @Override
   public Void visit(ArrayLookup n) {
-    throw new Error("Not implemented");
+    n.array.accept(this);
+    out.print("[");
+    n.index.accept(this);
+    out.print("]");
+    return null;
   }
 
   @Override
   public Void visit(Call n) {
-    throw new Error("Not implemented");
+    n.receiver.accept(this);
+    out.print("." + n.name + "(");
+    Iterator<Expression> iterator = n.rands.iterator();
+    while (iterator.hasNext()) {
+      Expression argument = iterator.next();
+      argument.accept(this);
+      if (iterator.hasNext()) {
+        out.print(", ");
+      }
+    }
+    out.print(")");
+    return null;
   }
 
   @Override
   public Void visit(NewArray n) {
-    throw new Error("Not implemented");
+    out.print("new int[");
+    n.size.accept(this);
+    out.print("]");
+    return null;
   }
 
   @Override
   public Void visit(NewObject n) {
-    throw new Error("Not implemented");
+    out.print("new " + n.typeName);
+    out.print("()");
+    return null;
   }
 
   @Override
   public Void visit(This n) {
-    throw new Error("Not implemented");
+    out.print("this");
+    return null;
   }
 }
