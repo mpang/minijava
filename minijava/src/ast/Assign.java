@@ -4,10 +4,10 @@ import visitor.Visitor;
 
 public class Assign extends Statement {
 	
-	public final IdentifierExp name;
+	public final String name;
 	public final Expression value;
 	
-	public Assign(IdentifierExp name, Expression value) {
+	public Assign(String name, Expression value) {
 		super();
 		this.name = name;
 		this.value = value;

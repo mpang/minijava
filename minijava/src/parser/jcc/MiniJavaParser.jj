@@ -283,7 +283,7 @@ Statement Assign() : {
   | < ASSIGN >
   	value = Expression()
   	< SEMICOLON >
-  	{ return new Assign(new IdentifierExp(name), value); }
+  	{ return new Assign(name, value); }
   )
 }
 
