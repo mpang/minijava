@@ -5,8 +5,6 @@ import java.io.PrintWriter;
 import util.IndentingWriter;
 import ast.*;
 
-
-
 /**
  * This prints the structure of an AST, showing its hierarchical relationships.
  * <p>
@@ -30,7 +28,12 @@ public class StructurePrintVisitor implements Visitor<Void> {
 
 	@Override
 	public Void visit(Program n) {
-	  throw new Error("Not implemented");
+	  out.println("Program");
+	  out.indent();
+	  n.mainClass.accept(this);
+	  n.classes.accept(this);
+	  out.outdent();
+	  return null;
 	}
 
 	@Override
@@ -56,7 +59,12 @@ public class StructurePrintVisitor implements Visitor<Void> {
 
 	@Override
 	public Void visit(Assign n) {
-	  throw new Error("Not implemented");
+	  out.println("Assign");
+	  out.indent();
+	  out.println(n.name);
+	  n.value.accept(this);
+	  out.outdent();
+	  return null;
 	}
 
 	@Override
@@ -101,7 +109,7 @@ public class StructurePrintVisitor implements Visitor<Void> {
 
 	@Override
 	public Void visit(IntegerLiteral n) {
-		out.println("IntegerLiteral "+n.value);
+		out.println("IntegerLiteral " + n.value);
 		return null;
 	}
 
@@ -130,90 +138,172 @@ public class StructurePrintVisitor implements Visitor<Void> {
 
   @Override
   public Void visit(MainClass n) {
-    throw new Error("Not implemented");
+    out.println("MainClass");
+    out.indent();
+    out.println(n.className);
+    out.println(n.argName);
+    n.statement.accept(this);
+    return null;
   }
 
   @Override
   public Void visit(ClassDecl n) {
-    throw new Error("Not implemented");
+    out.println("ClassDecl");
+    out.indent();
+    out.println(n.name);
+    if (!n.superName.isEmpty()) {
+      out.println(n.superName);
+    }
+    n.vars.accept(this);
+    n.methods.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(MethodDecl n) {
-    throw new Error("Not implemented");
+    out.println("MethodDecl");
+    out.indent();
+    n.returnType.accept(this);
+    out.println(n.name);
+    out.println("Formals");
+    out.indent();
+    n.formals.accept(this);
+    out.outdent();
+    n.vars.accept(this);
+    n.statements.accept(this);
+    n.returnExp.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(VarDecl n) {
-    throw new Error("Not implemented");
+    out.println("VarDecl");
+    out.indent();
+    out.println(n.kind.toString());
+    n.type.accept(this);
+    out.println(n.name);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(IntArrayType n) {
-    throw new Error("Not implemented");
+    out.println("IntArrayType");
+    return null;
   }
 
   @Override
   public Void visit(ObjectType n) {
-    throw new Error("Not implemented");
+    out.println("ObjectType " + n.name);
+    return null;
   }
 
   @Override
   public Void visit(Block n) {
-    throw new Error("Not implemented");
+    out.println("Block");
+    out.indent();
+    n.statements.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(If n) {
-    throw new Error("Not implemented");
+    out.println("If");
+    out.indent();
+    n.tst.accept(this);
+    n.thn.accept(this);
+    n.els.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(While n) {
-    throw new Error("Not implemented");
+    out.println("While");
+    out.indent();
+    n.tst.accept(this);
+    n.body.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(ArrayAssign n) {
-    throw new Error("Not implemented");
+    out.println("ArrayAssign");
+    out.indent();
+    out.println(n.name);
+    n.index.accept(this);
+    n.value.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(BooleanLiteral n) {
-    throw new Error("Not implemented");
+    out.println("BooleanLiteral " + n.value);
+    return null;
   }
 
   @Override
   public Void visit(And n) {
-    throw new Error("Not implemented");
+    out.println("And");
+    out.indent();
+    n.e1.accept(this);
+    n.e2.accept(this);
+    return null;
   }
 
   @Override
   public Void visit(ArrayLength n) {
-    throw new Error("Not implemented");
+    out.println("ArrayLength");
+    out.indent();
+    n.array.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(ArrayLookup n) {
-    throw new Error("Not implemented");
+    out.println("ArrayLookup");
+    out.indent();
+    n.array.accept(this);
+    n.index.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(Call n) {
-    throw new Error("Not implemented");
+    out.println("Call");
+    out.indent();
+    n.receiver.accept(this);
+    out.println(n.name);
+    n.rands.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(NewArray n) {
-    throw new Error("Not implemented");
+    out.println("NewArray");
+    out.indent();
+    n.size.accept(this);
+    out.outdent();
+    return null;
   }
 
   @Override
   public Void visit(NewObject n) {
-    throw new Error("Not implemented");  }
+    out.println("NewObject " + n.typeName);
+    return null;
+  }
 
   @Override
   public Void visit(This n) {
-    throw new Error("Not implemented");
+    out.println("This");
+    return null;
   }
 }
