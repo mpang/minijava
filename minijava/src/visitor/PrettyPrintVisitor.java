@@ -52,7 +52,7 @@ public class PrettyPrintVisitor implements Visitor<Void> {
 	public Void visit(Print n) {
 		out.print("System.out.println(");
 		n.exp.accept(this);
-		out.println(")");
+		out.println(");");
 		return null;
 	}
 
