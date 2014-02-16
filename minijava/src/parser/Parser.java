@@ -6,9 +6,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
-import parser.jcc.JCCFunctionsParser;
+import parser.jcc.JCCMiniJavaParser;
 import parser.jcc.ParseException;
-
 import ast.AST;
 import ast.Expression;
 import ast.Program;
@@ -53,7 +52,7 @@ public class Parser {
 	 * caller's responsibility to close the Reader.
 	 */
 	private static Program parse(Reader input) throws ParseException {
-		JCCFunctionsParser parser = new JCCFunctionsParser(input);
+		JCCMiniJavaParser parser = new JCCMiniJavaParser(input);
 		return parser.Program();
 	}
 
@@ -70,7 +69,7 @@ public class Parser {
 	 * @throws ParseException 
 	 */
 	public static Expression parseExp(String exp) throws ParseException {
-		JCCFunctionsParser parser = new JCCFunctionsParser(new StringReader(exp));
+	  JCCMiniJavaParser parser = new JCCMiniJavaParser(new StringReader(exp));
 		return parser.Expression();
 	}
 	/**

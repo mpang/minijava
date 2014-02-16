@@ -1,0 +1,388 @@
+/**
+ * JavaCC file
+ */
+ 
+options {
+  JDK_VERSION = "1.6";
+  STATIC = false;
+}
+PARSER_BEGIN(JCCMiniJavaParser)
+package parser.jcc;
+
+import ast.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class JCCMiniJavaParser {
+}
+
+PARSER_END(JCCMiniJavaParser)
+
+SKIP :
+{
+  " "
+| "\r"
+| "\t"
+| "\n"
+| < MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")* "/" >
+| < SINGLE_LINE_COMMENT: "//" (~["\n"])* >
+}
+
+TOKEN : /* KEYWORDS */
+{
+  < CLASS: "class" >
+| < PUBLIC: "public" >
+| < STATIC: "static" >
+| < VOID: "void" >
+| < MAIN: "main" >
+| < EXTENDS: "extends" >
+| < IF: "if" >
+| < ELSE: "else" >
+| < WHILE: "while" >
+| < THIS: "this" >
+| < NEW: "new" >
+| < PRINT: "System.out.println" >
+| < INT: "int" >
+| < BOOLEAN: "boolean" >
+| < STRING: "String" >
+| < RETURN: "return" >
+}
+
+TOKEN : /* SEPARATORS and OPERATORS*/
+{
+  < LPAREN: "(" >
+| < RPAREN: ")" >
+| < ASSIGN: "=" >
+| < QUESTION: "?" >
+| < COLON: ":" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < MULT: "*" >
+| < AND: "&&" >
+| < LESS: "<" >
+| < NOT: "!" >
+| < SEMICOLON: ";" >
+| < COMMA: "," >
+| < LBRACE: "{" >
+| < RBRACE: "}" >
+| < DOT: "." >
+| < LBRACKET: "[" >
+| < RBRACKET: "]" >
+| < LENGTH: ".length" >
+}
+	
+TOKEN :	/* LITERALS */
+{
+  < INTEGER_LITERAL: ( <DIGIT> )+ >
+| < BOOLEAN_LITERAL: "true" | "false" >
+| < IDENTIFIER: <LETTER> (<LETTER> | "_" | <DIGIT>)* >
+| < #LETTER: ["A" - "Z", "a" - "z"] >
+| < #DIGIT: ["0" - "9"] >
+}
+
+/**
+  * Main class and program
+  */
+Program Program() : {
+  MainClass mainClass;
+  List<ClassDecl> classes = new ArrayList<ClassDecl>();
+
+  ClassDecl clazz;}{
+  mainClass = MainClass()
+  (    clazz = ClassDecl()
+    { classes.add(clazz); }  )*
+  < EOF >
+  { return new Program(mainClass, new NodeList<ClassDecl>(classes)); }}
+
+MainClass MainClass() : {
+  String className, argName;
+  Statement s;}{
+  < CLASS >
+  className = Identifier()
+  < LBRACE >
+  < PUBLIC >
+  < STATIC >
+  < VOID >
+  < MAIN >
+  < LPAREN >
+  < STRING >
+  < LBRACKET >
+  < RBRACKET >
+  argName = Identifier()
+  < RPAREN >
+  < LBRACE >
+  s = Statement()
+  < RBRACE >
+  < RBRACE >
+  { return new MainClass(className, argName, s); }}
+
+/**
+  * Declarations
+  */
+ClassDecl ClassDecl() : {
+  String name;
+  String superName = "";
+  List<VarDecl> fields = new ArrayList<VarDecl>();
+  List<MethodDecl> methods = new ArrayList<MethodDecl>();
+
+  VarDecl field;
+  MethodDecl method;}{
+  < CLASS >
+  name = Identifier()
+  (    < EXTENDS >
+    superName = Identifier()
+  )?
+  < LBRACE >
+  (    field = VarDecl(VarDecl.Kind.FIELD)
+    { fields.add(field); }  )*
+  (    method = MethodDecl()
+    { methods.add(method);}
+  )*
+  < RBRACE >
+  {    return new ClassDecl(name,
+    					 superName,
+    					 new NodeList<VarDecl>(fields),
+    					 new NodeList<MethodDecl>(methods));  }}
+
+MethodDecl MethodDecl() : {
+  Type returnType;
+  String name;
+  List<VarDecl> formals = new ArrayList<VarDecl>();
+  List<VarDecl> locals = new ArrayList<VarDecl>();
+  List<Statement> body = new ArrayList<Statement>();
+  Expression returnExp;
+
+  Type formalType;
+  String formalName;
+  VarDecl local;
+  Statement s;
+}{
+  < PUBLIC >
+  returnType = Type()
+  name = Identifier()
+  < LPAREN >
+  (    formalType = Type()
+    formalName = Identifier()
+    { formals.add(new VarDecl(VarDecl.Kind.FORMAL, formalType, formalName)); }    (      < COMMA >
+      formalType = Type()
+      formalName = Identifier()
+      { formals.add(new VarDecl(VarDecl.Kind.FORMAL, formalType, formalName)); }
+    )*
+  )?
+  < RPAREN >
+  < LBRACE >
+  (
+    LOOKAHEAD(2)    local = VarDecl(VarDecl.Kind.LOCAL)
+    { locals.add(local); }  )*
+  (
+    LOOKAHEAD(2)    s = Statement()
+    { body.add(s); }  )*
+  < RETURN >
+  returnExp = Expression()
+  < SEMICOLON >
+  < RBRACE >
+  {    return new MethodDecl(returnType,
+    					  name,
+    					  new NodeList<VarDecl>(formals),
+    					  new NodeList<VarDecl>(locals),
+    					  new NodeList<Statement>(body),
+    					  returnExp);  }}
+
+VarDecl VarDecl(VarDecl.Kind kind) : {
+  Type type;
+  String name;}
+{
+  type = Type()
+  name = Identifier()
+  < SEMICOLON >
+  { return new VarDecl(kind, type, name); }}
+
+/**
+  * Types
+  */
+Type Type() : {
+  Token i;
+}
+{
+  < INT >
+  (
+    < LBRACKET >
+    < RBRACKET >
+    { return new IntArrayType(); }
+  | { return new IntegerType(); }
+  )
+| < BOOLEAN >
+  { return new BooleanType(); }
+| i = < IDENTIFIER >
+  { return new ObjectType(i.image); }
+}
+
+/**
+  * Statements
+  */
+Statement Statement() : {
+  Statement s;}{
+  s = Block()
+  { return s; }| s = If()  { return s; }| s = While()
+  { return s; }| s = Print()
+  { return s; }| s = Assign()
+  { return s; }}
+
+Statement Block() : {
+  Statement s;
+  List<Statement> body = new ArrayList<Statement>();}{
+  < LBRACE >
+  (    s = Statement()
+    { body.add(s); }  )*
+  < RBRACE >
+  { return new Block(new NodeList<Statement>(body)); }}
+
+Statement If() : {
+  Expression test;
+  Statement then, els;}{
+  < IF >
+  < LPAREN >
+  test = Expression()
+  < RPAREN >
+  then = Statement()
+  < ELSE >
+  els = Statement()
+  { return new If(test, then, els); }}
+
+Statement While() : {
+  Expression test;
+  Statement body;}{
+  < WHILE >
+  < LPAREN >
+  test = Expression()
+  < RPAREN >
+  body = Statement()
+  { return new While(test, body); }}
+
+Statement Print() : {
+  Expression e;}{
+  < PRINT >
+  < LPAREN >
+  e = Expression()
+  < RPAREN >
+  < SEMICOLON >
+  { return new Print(e); }}
+
+Statement Assign() : {
+  String name;
+  Expression index;
+  Expression value;}{
+  name = Identifier()
+  (    < LBRACKET >
+    index = Expression()
+    < RBRACKET >
+    < ASSIGN >
+  	value = Expression()
+  	< SEMICOLON >
+  	{ return new ArrayAssign(name, index, value); }
+  | < ASSIGN >
+  	value = Expression()
+  	< SEMICOLON >
+  	{ return new Assign(new IdentifierExp(name), value); }
+  )
+}
+
+/**
+  * Expressions
+  */
+Expression Expression() : {
+  Expression e1, e2;}{
+  e1 = CompareExpression()
+  (    < AND >
+    e2 = CompareExpression()
+    { e1 = new And(e1, e2); }  )*
+  { return e1; }}
+
+Expression CompareExpression() : {
+  Expression e1, e2;}{
+  e1 = AddExpression()
+  (    < LESS >
+    e2 = AddExpression()
+    { e1 = new LessThan(e1, e2); }
+  )?  { return e1; }}
+
+Expression AddExpression() : {
+  Expression e1, e2;}{
+  e1 = MultExpression()
+  (    < PLUS >
+    e2 = MultExpression()
+    { e1 = new Plus(e1, e2); }  | < MINUS >
+  	e2 = MultExpression()  	{ e1 = new Minus(e1, e2); }  )*
+  { return e1; }}
+
+Expression MultExpression() : {
+  Expression e1, e2;}{
+  e1 = NotExpression()
+  (    < MULT >
+    e2 = NotExpression()
+    { e1 = new Times(e1, e2); }  )*
+  { return e1; }}
+
+Expression NotExpression() : {
+  Expression e;}{
+  < NOT >
+  e = NotExpression()
+  { return new Not(e); }| e = PrimaryExpression()  { return e; }}
+
+Expression PrimaryExpression() : {
+  Expression e;
+  Expression index;
+  String id;
+  List<Expression> args = new ArrayList<Expression>();
+  Expression arg;}{
+  e = ElementaryExpression()
+  (    < LENGTH >    { return new ArrayLength(e); }  | < LBRACKET >
+  	index = Expression()
+  	< RBRACKET >  	{ return new ArrayLookup(e, index); }
+  | < DOT >
+  	id = Identifier()
+  	< LPAREN >
+  	(
+      arg = Expression()
+      { args.add(arg); }
+  	  (
+  	    < COMMA >
+  	    arg = Expression()
+        { args.add(arg); }
+      )*
+    )?
+    < RPAREN >
+    { return new Call(e, id, new NodeList<Expression>(args)); }
+  | { return e; }  )}
+
+Expression ElementaryExpression() : {
+  Token t;
+  Expression e;}
+{
+  < NEW >
+  (    t = < IDENTIFIER >
+    < LPAREN >
+    < RPAREN >
+    { return new NewObject(t.image); }  | < INT >
+  	< LBRACKET >
+  	e = Expression()
+  	< RBRACKET >
+  	{ return new NewArray(e); }
+  )| t = < INTEGER_LITERAL >  { return new IntegerLiteral(t.image); }| t = < BOOLEAN_LITERAL >
+  { return new BooleanLiteral(t.image); }
+| t = < IDENTIFIER >  { return new IdentifierExp(t.image); }| < THIS >  { return new This(); }
+| < LPAREN >
+  e = Expression()
+  < RPAREN >  { return e; }
+}
+
+/**
+  * Identifier
+  */
+String Identifier() : {
+  Token i;
+}
+{
+  i = < IDENTIFIER >
+  { return i.image; }
+}
