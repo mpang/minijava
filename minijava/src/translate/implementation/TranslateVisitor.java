@@ -199,12 +199,12 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(IntArrayType n) {
-    throw new Error("Not implemented");
+    return null;
   }
 
   @Override
   public TRExp visit(ObjectType n) {
-    throw new Error("Not implemented");
+    return null;
   }
 
   @Override
