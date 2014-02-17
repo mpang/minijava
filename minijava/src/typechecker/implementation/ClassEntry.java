@@ -10,11 +10,13 @@ import ast.Type;
 
 public class ClassEntry extends DefaultIndentable {
 
+  public final String className;
   private final ImpTable<Type> fields;
   private final ImpTable<MethodEntry> methods;
   private ClassEntry superClass;
   
-  ClassEntry(ImpTable<Type> fields, ImpTable<MethodEntry> methods) {
+  ClassEntry(String className, ImpTable<Type> fields, ImpTable<MethodEntry> methods) {
+    this.className = className;
     this.fields = fields;
     this.methods = methods;
   }
@@ -36,11 +38,23 @@ public class ClassEntry extends DefaultIndentable {
   }
   
   Type lookupField(String fieldName) {
-    return fields.lookup(fieldName);
+    if (fields.containsKey(fieldName)) {
+      return fields.lookup(fieldName);
+    }
+    
+    return superClass != null ? superClass.lookupField(fieldName) : null;
   }
   
   MethodEntry lookupMethod(String methodName) {
-    return methods.lookup(methodName);
+    if (methods.containsKey(methodName)) {
+      return methods.lookup(methodName);
+    }
+    
+    return superClass != null ? superClass.lookupMethod(methodName) : null;
+  }
+  
+  boolean containsMethod(String methodName) {
+    return methods.containsKey(methodName) || (superClass != null && superClass.containsMethod(methodName));
   }
 
   @Override

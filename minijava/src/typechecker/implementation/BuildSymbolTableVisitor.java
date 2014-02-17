@@ -57,13 +57,20 @@ public class BuildSymbolTableVisitor extends DefaultVisitor<ImpTable<ClassEntry>
 	
   @Override
   public ImpTable<ClassEntry> visit(MainClass n) {
-    addClass(n.className, new ClassEntry(new ImpTable<Type>(), new ImpTable<MethodEntry>()));
+    addClass(n.className, new ClassEntry(n.className, new ImpTable<Type>(), new ImpTable<MethodEntry>()));
     return null;
   }
 
   @Override
   public ImpTable<ClassEntry> visit(ClassDecl n) {
-    currentClass = new ClassEntry(new ImpTable<Type>(), new ImpTable<MethodEntry>());
+    currentClass = new ClassEntry(n.name, new ImpTable<Type>(), new ImpTable<MethodEntry>());
+    
+    if (!n.superName.isEmpty()) {
+      if (!symbolTable.containsKey(n.superName)) {
+        errors.undefinedId(n.superName);
+      }
+      currentClass.setSuperClass(symbolTable.lookup(n.superName));
+    }
 
     n.vars.accept(this);
     n.methods.accept(this);

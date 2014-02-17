@@ -23,10 +23,6 @@ public class MethodEntry extends DefaultIndentable {
     variables = new ImpTable<Type>();
   }
   
-  ClassEntry getEnclosedClass() {
-    return enclosedClass;
-  }
-  
   MethodSignature getMethodSignature() {
     return methodSignature;
   }
@@ -36,7 +32,8 @@ public class MethodEntry extends DefaultIndentable {
   }
   
   Type lookupVariable(String variableName) {
-    return variables.lookup(variableName);
+    return variables.containsKey(variableName) ? variables.lookup(variableName)
+                                               : enclosedClass.lookupField(variableName);
   }
   
   /**
@@ -61,16 +58,8 @@ public class MethodEntry extends DefaultIndentable {
       return new ArrayList<Type>(parameterTypes);
     }
     
-    void setReturnType(Type returnType) {
-      this.returnType = returnType;
-    }
-    
     void addParameterType(Type parameterType) {
       parameterTypes.add(parameterType);
-    }
-    
-    void setParameterType(int index, Type parameterType) {
-      parameterTypes.set(index, parameterType);
     }
   }
 
