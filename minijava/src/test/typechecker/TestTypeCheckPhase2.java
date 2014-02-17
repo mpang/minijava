@@ -47,7 +47,7 @@ public class TestTypeCheckPhase2 {
 		if (verifyTanscript)
 			transcript = new TranscriptWriter(new File("TestTypeCheckPhase2.log"));
 		else {
-			File tempLog = new File("TestTypeCheckPhase1-log.tmp");
+			File tempLog = new File("TestTypeCheckPhase2-log.tmp");
 			if (tempLog.exists())
 				tempLog.delete();
 			transcript = new TranscriptWriter(tempLog);
