@@ -1,19 +1,33 @@
 package typechecker.implementation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import typechecker.ErrorReport;
-import typechecker.implementation.SymbolTable.FunctionSignature;
+import typechecker.implementation.MethodEntry.MethodSignature;
+import util.ImpTable;
 import util.ImpTable.DuplicateException;
-import visitor.Visitor;
-import ast.*;
+import visitor.DefaultVisitor;
+import ast.AST;
+import ast.ClassDecl;
+import ast.MainClass;
+import ast.MethodDecl;
+import ast.NodeList;
+import ast.Program;
+import ast.Type;
+import ast.VarDecl;
+import ast.VarDecl.Kind;
 
 /**
  * This visitor implements Phase 1 of the TypeChecker. It constructs the symboltable.
  * 
  * @author norm
  */
-public class BuildSymbolTableVisitor implements Visitor<SymbolTable> {
+public class BuildSymbolTableVisitor extends DefaultVisitor<ImpTable<ClassEntry>> {
 	
-	private final SymbolTable symbolTable = new SymbolTable();
+	private final ImpTable<ClassEntry> symbolTable = new ImpTable<ClassEntry>();
+	private ClassEntry currentClass;
+	private MethodEntry currentMethod;
 	private final ErrorReport errors;
 	
 	public BuildSymbolTableVisitor(ErrorReport errors) {
@@ -27,192 +41,88 @@ public class BuildSymbolTableVisitor implements Visitor<SymbolTable> {
 	// We also check for duplicate identifier definitions 
 
 	@Override
-	public SymbolTable visit(Program n) {
-	  throw new Error("Not implemented");
+	public ImpTable<ClassEntry> visit(Program n) {
+	  n.mainClass.accept(this);
+	  n.classes.accept(this);
+	  return symbolTable;
 	}
 	
 	@Override
-	public <T extends AST> SymbolTable visit(NodeList<T> ns) {
+	public <T extends AST> ImpTable<ClassEntry> visit(NodeList<T> ns) {
 		for (int i = 0; i < ns.size(); i++) {
 			ns.elementAt(i).accept(this);
 		}
 		return null;
 	}
-
-	@Override
-	public SymbolTable visit(Assign n) {
-	  throw new Error("Not implemented");
-	}
-	
-
-	@Override
-	public SymbolTable visit(IdentifierExp n) {
-		if (symbolTable.lookupVariable(n.name) == null) {
-			errors.undefinedId(n.name);
-		}
-		return null;
-	}
-	
-	@Override
-	public SymbolTable visit(BooleanType n) {
-		return null;
-	}
-
-	@Override
-	public SymbolTable visit(IntegerType n) {
-		return null;
-	}
-
-	@Override
-	public SymbolTable visit(Print n) {
-		n.exp.accept(this);
-		return null;
-	}
-
-	@Override
-	public SymbolTable visit(LessThan n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
-
-	@Override
-	public SymbolTable visit(Plus n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
-
-	@Override
-	public SymbolTable visit(Minus n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
-
-	@Override
-	public SymbolTable visit(Times n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
-
-	@Override
-	public SymbolTable visit(IntegerLiteral n) {
-		return null;
-	}
-
-	@Override
-	public SymbolTable visit(Not not) {
-		not.e.accept(this);
-		return null;
-	}
 	
   @Override
-  public SymbolTable visit(MainClass n) {
-    throw new Error("Not implemented");
+  public ImpTable<ClassEntry> visit(MainClass n) {
+    addClass(n.className, new ClassEntry(new ImpTable<Type>(), new ImpTable<MethodEntry>()));
+    return null;
   }
 
   @Override
-  public SymbolTable visit(ClassDecl n) {
-    throw new Error("Not implemented");
+  public ImpTable<ClassEntry> visit(ClassDecl n) {
+    currentClass = new ClassEntry(new ImpTable<Type>(), new ImpTable<MethodEntry>());
+
+    n.vars.accept(this);
+    n.methods.accept(this);
+    
+    addClass(n.name, currentClass);
+    currentClass = null;
+    return null;
   }
 
   @Override
-  public SymbolTable visit(MethodDecl n) {
-    throw new Error("Not implemented");
+  public ImpTable<ClassEntry> visit(MethodDecl n) {
+    List<Type> paramTypes = new ArrayList<Type>();
+    for (VarDecl paramDecl : n.formals) {
+      paramTypes.add(paramDecl.type);
+    }
+    
+    currentMethod = new MethodEntry(new MethodSignature(n.returnType, paramTypes), currentClass);
+    
+    n.formals.accept(this);
+    n.vars.accept(this);
+    
+    addMethod(n.name, currentMethod);
+    currentMethod = null;
+    return null;
   }
 
   @Override
-  public SymbolTable visit(VarDecl n) {
-    throw new Error("Not implemented");
+  public ImpTable<ClassEntry> visit(VarDecl n) {
+    addVariable(n);
+    return null;
   }
 
-  @Override
-  public SymbolTable visit(IntArrayType n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(ObjectType n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(Block n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(If n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(While n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(ArrayAssign n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(BooleanLiteral n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(And n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(ArrayLength n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(ArrayLookup n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(Call n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(NewArray n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(NewObject n) {
-    throw new Error("Not implemented");
-  }
-
-  @Override
-  public SymbolTable visit(This n) {
-    throw new Error("Not implemented");
-  }
-
-	///////////////////// Helpers ///////////////////////////////////////////////
-	
-	private void addVariable(SymbolTable table, String name, Type type) {
-	  try {
-      table.insertVariable(name, type);
+  ///////////////////// HELPERS //////////////////////////////////////
+  
+  private void addClass(String name, ClassEntry entry) {
+    try {
+      symbolTable.put(name, entry);
     } catch (DuplicateException e) {
       errors.duplicateDefinition(name);
     }
-	}
-	
-	private void addFunction(SymbolTable table, String name, FunctionSignature functionSignature) {
-	  try {
-      table.insertFunction(name, functionSignature);
+  }
+  
+  private void addMethod(String name, MethodEntry entry) {
+    try {
+      currentClass.insertMethod(name, entry);
     } catch (DuplicateException e) {
       errors.duplicateDefinition(name);
     }
-	}
+  }
+  
+  private void addVariable(VarDecl var) {
+    try {
+      if (var.kind == Kind.FIELD) {
+        currentClass.insertField(var.name, var.type);
+      } else {
+        currentMethod.insertVariable(var.name, var.type);
+      }
+    } catch (DuplicateException e) {
+      errors.duplicateDefinition(var.name);
+    }
+  }
 }

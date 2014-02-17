@@ -3,6 +3,7 @@ package typechecker.implementation;
 import typechecker.ErrorReport;
 import typechecker.TypeChecked;
 import typechecker.TypeCheckerException;
+import util.ImpTable;
 import ast.Program;
 
 
@@ -21,7 +22,7 @@ public class TypeCheckerImplementation extends TypeChecked {
 	/**
 	 * The symbol table computed by phase 1:
 	 */
-	private SymbolTable symbolTable;
+	private ImpTable<ClassEntry> symbolTable;
 
 	public TypeCheckerImplementation(Program program) {
 		this.program = program;
@@ -44,12 +45,12 @@ public class TypeCheckerImplementation extends TypeChecked {
 	 * in isolation. In normal operation (not unit testing) this method should 
 	 * not be called by code outside the type checker.
 	 */
-	public SymbolTable buildTable() {
+	public ImpTable<ClassEntry> buildTable() {
 		symbolTable = program.accept(new BuildSymbolTableVisitor(errors));
 		return symbolTable;
 	}
 
-	public SymbolTable typeCheckPhaseTwo() throws TypeCheckerException {
+	public ImpTable<ClassEntry> typeCheckPhaseTwo() throws TypeCheckerException {
 		program.accept(new TypeCheckVisitor(symbolTable, errors));
 		errors.close();
 		return symbolTable;
@@ -59,7 +60,7 @@ public class TypeCheckerImplementation extends TypeChecked {
 		return program;
 	}
 
-	public SymbolTable getTable() {
+	public ImpTable<ClassEntry> getTable() {
 		return symbolTable;
 	}
 }

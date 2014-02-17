@@ -22,8 +22,9 @@ import java.util.Deque;
 
 import translate.Fragments;
 import translate.Translator;
-import typechecker.implementation.SymbolTable;
+import typechecker.implementation.ClassEntry;
 import util.FunTable;
+import util.ImpTable;
 import visitor.Visitor;
 import ast.*;
 
@@ -54,7 +55,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	private Deque<Frame> frames; // stack of frames
 	private Deque<FunTable<Access>> envs; // stack of envs to preserve scoping
 
-	public TranslateVisitor(SymbolTable table, Frame frameFactory) {
+	public TranslateVisitor(ImpTable<ClassEntry> table, Frame frameFactory) {
 		this.frags = new Fragments(frameFactory);
 		this.frameFactory = frameFactory;
 		frames = new ArrayDeque<Frame>();

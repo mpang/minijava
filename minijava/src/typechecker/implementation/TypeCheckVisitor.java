@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import typechecker.ErrorReport;
+import util.ImpTable;
 import visitor.Visitor;
 import ast.*;
 
@@ -31,10 +32,10 @@ public class TypeCheckVisitor implements Visitor<Type> {
 	/**
 	 * The symbol table from Phase 1. 
 	 */
-	private SymbolTable symbolTable;
+	private ImpTable<ClassEntry> symbolTable;
 
 
-	public TypeCheckVisitor(SymbolTable symbolTable, ErrorReport errors) {
+	public TypeCheckVisitor(ImpTable<ClassEntry> symbolTable, ErrorReport errors) {
 		this.symbolTable = symbolTable;
 		this.errors = errors;
 	}
