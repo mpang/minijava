@@ -1,12 +1,6 @@
 package translate.implementation;
 
-import static ir.tree.IR.CMOVE;
-import static ir.tree.IR.ESEQ;
-import static ir.tree.IR.FALSE;
-import static ir.tree.IR.MOVE;
-import static ir.tree.IR.SEQ;
-import static ir.tree.IR.TEMP;
-import static ir.tree.IR.TRUE;
+import static ir.tree.IR.*;
 import ir.frame.Access;
 import ir.frame.Frame;
 import ir.temp.Label;
@@ -94,18 +88,18 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(BooleanType n) {
-		throw new Error("Not implemented");
+		return null;
 	}
 
 	@Override
 	public TRExp visit(IntegerType n) {
-		throw new Error("Not implemented");
+		return null;
 	}
 
 	@Override
 	public TRExp visit(Print n) {
 		TRExp arg = n.exp.accept(this);
-		return new Ex(IR.CALL(Translator.L_PRINT, arg.unEx()));
+		return new Ex(CALL(Translator.L_PRINT, arg.unEx()));
 	}
 
 	@Override
@@ -130,29 +124,29 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	private TRExp numericOp(Op op, Expression e1, Expression e2) {
 		TRExp l = e1.accept(this);
 		TRExp r = e2.accept(this);
-		return new Ex(IR.BINOP(op, l.unEx(), r.unEx()));
+		return new Ex(BINOP(op, l.unEx(), r.unEx()));
 	}
 
 	@Override
 	public TRExp visit(Plus n) {
-		return numericOp(Op.PLUS,n.e1,n.e2);
+		return numericOp(Op.PLUS, n.e1, n.e2);
 	}
 
 	@Override
 	public TRExp visit(Minus n) {
-		return numericOp(Op.MINUS,n.e1,n.e2);
+		return numericOp(Op.MINUS, n.e1, n.e2);
 	}
 
 	@Override
 	public TRExp visit(Times n) {
-		return numericOp(Op.MUL,n.e1,n.e2);
+		return numericOp(Op.MUL, n.e1, n.e2);
 	}
 
 	//////////////////////////////////////////////////////////////////
 
 	@Override
 	public TRExp visit(IntegerLiteral n) {
-		return new Ex(IR.CONST(n.value));
+		return new Ex(CONST(n.value));
 	}
 
 	@Override
@@ -235,12 +229,12 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(BooleanLiteral n) {
-    throw new Error("Not implemented");
+    return new Ex(n.value ? TRUE : FALSE);
   }
 
   @Override
   public TRExp visit(And n) {
-    throw new Error("Not implemented");
+    return numericOp(Op.AND, n.e1, n.e2);
   }
 
   @Override
