@@ -56,6 +56,10 @@ public class ClassEntry extends DefaultIndentable {
   boolean containsMethod(String methodName) {
     return methods.containsKey(methodName) || (superClass != null && superClass.containsMethod(methodName));
   }
+  
+  public int getNumOfFields() {
+    return fields.size();
+  }
 
   @Override
   public void dump(IndentingWriter out) {

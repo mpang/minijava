@@ -48,10 +48,12 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	private Frame frameFactory;
 	private Deque<Frame> frames; // stack of frames
 	private Deque<FunTable<Access>> envs; // stack of envs to preserve scoping
+	private ImpTable<ClassEntry> table;
 
 	public TranslateVisitor(ImpTable<ClassEntry> table, Frame frameFactory) {
-		this.frags = new Fragments(frameFactory);
+		frags = new Fragments(frameFactory);
 		this.frameFactory = frameFactory;
+		this.table = table;
 		frames = new ArrayDeque<Frame>();
 		envs = new ArrayDeque<FunTable<Access>>();
 	}
@@ -262,7 +264,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(NewObject n) {
-    throw new Error("Not implemented");
+    Temp temp = new Temp();
+    int numBytes = table.lookup(n.typeName).getNumOfFields() * frames.peek().wordSize();
+    return new Ex(ESEQ(MOVE(TEMP(temp),
+                            CALL(Translator.L_NEW_OBJECT, CONST(numBytes))),
+                       TEMP(temp)));
   }
 
   @Override
