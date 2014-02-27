@@ -8,6 +8,7 @@ import ir.temp.Temp;
 import ir.tree.BINOP.Op;
 import ir.tree.CJUMP.RelOp;
 import ir.tree.IR;
+import ir.tree.IRExp;
 import ir.tree.IRStm;
 import ir.tree.TEMP;
 
@@ -15,10 +16,12 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 import translate.Fragments;
+import translate.ProcFragment;
 import translate.Translator;
 import typechecker.implementation.ClassEntry;
 import util.FunTable;
 import util.ImpTable;
+import util.List;
 import visitor.Visitor;
 import ast.*;
 
@@ -49,6 +52,8 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	private Deque<Frame> frames; // stack of frames
 	private Deque<FunTable<Access>> envs; // stack of envs to preserve scoping
 	private ImpTable<ClassEntry> table;
+	
+	private ClassEntry currentClass;
 
 	public TranslateVisitor(ImpTable<ClassEntry> table, Frame frameFactory) {
 		frags = new Fragments(frameFactory);
@@ -196,7 +201,30 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(MethodDecl n) {
-    throw new Error("Not implemented");
+    Frame frame = newFrame(Label.get(currentClass.className + "$" + n.name), n.formals.size());
+    frames.push(frame);
+    envs.push(FunTable.<Access>theEmpty());
+    
+    // params
+    for (int i = 0; i < n.formals.size(); i++) {
+      putEnv(n.formals.elementAt(i).name, frame.getFormal(i));
+    }
+    
+    // locals
+    for (VarDecl local : n.vars) {
+      putEnv(local.name, frame.allocLocal(false));
+    }
+    
+    // body
+    IRExp body = n.statements.size() > 0 ? ESEQ(n.statements.accept(this).unNx(),
+                                                n.returnExp.accept(this).unEx())
+                                         : n.returnExp.accept(this).unEx();
+    
+    frags.add(new ProcFragment(frame, frame.procEntryExit1(MOVE(frame.RV(), body))));
+    frames.pop();
+    envs.pop();
+    
+    return new Nx(NOP);
   }
 
   @Override
@@ -251,7 +279,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(Call n) {
-    throw new Error("Not implemented");
+    List<IRExp> args = List.list(n.receiver.accept(this).unEx());
+    for (Expression arg : n.rands) {
+      args.add(arg.accept(this).unEx());
+    }
+    return new Ex(CALL(Label.get(n.receiver.getType().toString() + "$" + n.name), args));
   }
 
   @Override
