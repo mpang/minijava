@@ -254,7 +254,10 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(NewArray n) {
-    throw new Error("Not implemented");
+    Temp temp = new Temp();
+    return new Ex(ESEQ(MOVE(TEMP(temp),
+                            CALL(Translator.L_NEW_ARRAY, n.size.accept(this).unEx())),
+                       TEMP(temp)));
   }
 
   @Override
