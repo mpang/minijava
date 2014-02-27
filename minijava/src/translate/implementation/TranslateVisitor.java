@@ -141,6 +141,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	public TRExp visit(Times n) {
 		return numericOp(Op.MUL, n.e1, n.e2);
 	}
+	
+	@Override
+  public TRExp visit(And n) {
+    return numericOp(Op.AND, n.e1, n.e2);
+  }
 
 	//////////////////////////////////////////////////////////////////
 
@@ -230,11 +235,6 @@ public class TranslateVisitor implements Visitor<TRExp> {
   @Override
   public TRExp visit(BooleanLiteral n) {
     return new Ex(n.value ? TRUE : FALSE);
-  }
-
-  @Override
-  public TRExp visit(And n) {
-    return numericOp(Op.AND, n.e1, n.e2);
   }
 
   @Override
