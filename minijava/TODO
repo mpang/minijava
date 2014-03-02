@@ -1,5 +1,4 @@
 Parsing:
-- allow method chaining
 
 Type-checking:
 - test against broken programs
