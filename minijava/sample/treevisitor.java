@@ -218,7 +218,6 @@ class Tree {
     boolean ntb;
     int auxkey1;
     int auxkey2;
-    Tree temp;
 
     if (c_node.GetHas_Left())
       ntb = this.RemoveLeft(p_node, c_node);
@@ -226,8 +225,7 @@ class Tree {
       ntb = this.RemoveRight(p_node, c_node);
     else {
       auxkey1 = c_node.GetKey();
-      temp = p_node.GetLeft();
-      auxkey2 = temp.GetKey();
+      auxkey2 = p_node.GetLeft().GetKey();
       if (this.Compare(auxkey1, auxkey2)) {
         ntb = p_node.SetLeft(my_null);
         ntb = p_node.SetHas_Left(false);
@@ -241,10 +239,8 @@ class Tree {
 
   public boolean RemoveRight(Tree p_node, Tree c_node) {
     boolean ntb;
-    Tree temp;
     while (c_node.GetHas_Right()) {
-      temp = c_node.GetRight();
-      ntb = c_node.SetKey(temp.GetKey());
+      ntb = c_node.SetKey(c_node.GetRight().GetKey());
       p_node = c_node;
       c_node = c_node.GetRight();
     }
@@ -255,10 +251,8 @@ class Tree {
 
   public boolean RemoveLeft(Tree p_node, Tree c_node) {
     boolean ntb;
-    Tree temp;
     while (c_node.GetHas_Left()) {
-      temp = c_node.GetLeft();
-      ntb = c_node.SetKey(temp.GetKey());
+      ntb = c_node.SetKey(c_node.GetLeft().GetKey());
       p_node = c_node;
       c_node = c_node.GetLeft();
     }

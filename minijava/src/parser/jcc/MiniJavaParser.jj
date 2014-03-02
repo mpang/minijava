@@ -336,9 +336,9 @@ Expression PrimaryExpression() : {
   List<Expression> args = new ArrayList<Expression>();
   Expression arg;}{
   e = ElementaryExpression()
-  (    < LENGTH >    { return new ArrayLength(e); }  | < LBRACKET >
+  (    < LENGTH >    { e = new ArrayLength(e); }  | < LBRACKET >
   	index = Expression()
-  	< RBRACKET >  	{ return new ArrayLookup(e, index); }
+  	< RBRACKET >  	{ e = new ArrayLookup(e, index); }
   | < DOT >
   	id = Identifier()
   	< LPAREN >
@@ -352,8 +352,9 @@ Expression PrimaryExpression() : {
       )*
     )?
     < RPAREN >
-    { return new Call(e, id, new NodeList<Expression>(args)); }
-  | { return e; }  )}
+    { e = new Call(e, id, new NodeList<Expression>(args)); }
+  )*
+  { return e; }}
 
 Expression ElementaryExpression() : {
   Token t;
