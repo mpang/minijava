@@ -2,5 +2,4 @@ Parsing:
 - allow method chaining
 
 Type-checking:
-- allow superclasses and subclasses to be mutally recursive (superclass defined after subclass)
 - test against broken programs

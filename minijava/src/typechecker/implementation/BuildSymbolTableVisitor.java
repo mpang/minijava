@@ -44,6 +44,7 @@ public class BuildSymbolTableVisitor extends DefaultVisitor<ImpTable<ClassEntry>
 	public ImpTable<ClassEntry> visit(Program n) {
 	  n.mainClass.accept(this);
 	  n.classes.accept(this);
+	  buildClassHierarchy(n.classes);
 	  return symbolTable;
 	}
 	
@@ -65,13 +66,6 @@ public class BuildSymbolTableVisitor extends DefaultVisitor<ImpTable<ClassEntry>
   public ImpTable<ClassEntry> visit(ClassDecl n) {
     currentClass = new ClassEntry(n.name, new ImpTable<Type>(), new ImpTable<MethodEntry>());
     
-    if (!n.superName.isEmpty()) {
-      if (!symbolTable.containsKey(n.superName)) {
-        errors.undefinedId(n.superName);
-      }
-      currentClass.setSuperClass(symbolTable.lookup(n.superName));
-    }
-
     n.vars.accept(this);
     n.methods.accept(this);
     
@@ -130,6 +124,17 @@ public class BuildSymbolTableVisitor extends DefaultVisitor<ImpTable<ClassEntry>
       }
     } catch (DuplicateException e) {
       errors.duplicateDefinition(var.name);
+    }
+  }
+  
+  private void buildClassHierarchy(NodeList<ClassDecl> classes) {
+    for (ClassDecl clazz : classes) {
+      if (!clazz.superName.isEmpty()) {
+        if (!symbolTable.containsKey(clazz.superName)) {
+          errors.undefinedId(clazz.superName);
+        }
+        symbolTable.lookup(clazz.name).setSuperClass(symbolTable.lookup(clazz.superName));
+      }
     }
   }
 }
