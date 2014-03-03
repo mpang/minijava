@@ -12,10 +12,10 @@ import junit.framework.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import util.SampleCode;
 import translate.Fragments;
 import translate.Translator;
 import typechecker.TypeCheckerException;
+import util.SampleCode;
 import util.Utils;
 
 
@@ -167,7 +167,7 @@ public class TestTranslate {
 	
 	@Test
 	public void testSampleCode() throws Exception {
-		File[] files = SampleCode.sampleFiles("exp");
+		File[] files = SampleCode.sampleFiles("java");
 		for (int i = 0; i < files.length; i++) {
 			File f = files[i];
 			if (!optionalSample(f))
@@ -176,7 +176,7 @@ public class TestTranslate {
 	}
 	@Test @Ignore // Don't run this unless you are implementing inheritance support!
 	public void testOptionalSampleCode() throws Exception {
-		File[] files = SampleCode.sampleFiles("exp");
+		File[] files = SampleCode.sampleFiles("java");
 		for (int i = 0; i < files.length; i++) {
 			File f = files[i];
 			if (optionalSample(f))
