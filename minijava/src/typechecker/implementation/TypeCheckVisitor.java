@@ -57,28 +57,33 @@ public class TypeCheckVisitor implements Visitor<Type> {
 	 */
 	private void check(Expression exp, Type expected, Type actual) {
 		if (!assignableFrom(expected, actual)) {
-		  assignableFrom(expected, actual);
-			errors.typeError(exp, expected, actual);
+		  errors.typeError(exp, expected, actual);
 		}
 	}	
 
 	private boolean assignableFrom(Type expected, Type actual) {
-	  // non-object types
+	  // both are non-object types
 	  if (!(expected instanceof ObjectType) && !(actual instanceof ObjectType)) {
 	    return expected.equals(actual);
 	  }
 	  
-	  // check subtyping
-	  ObjectType expectedObjectType = (ObjectType) expected;
-	  ObjectType actualObjectType = (ObjectType) actual;
-	  Set<String> actualObjectTypes = new HashSet<String>();
-	  ClassEntry clazz = symbolTable.lookup(actualObjectType.name);
-	  while (clazz != null) {
-	    actualObjectTypes.add(clazz.className);
-	    clazz = clazz.getSuperClass();
+	  // both are object types
+	  if ((expected instanceof ObjectType) && (actual instanceof ObjectType)) {
+  	  // check subtyping
+  	  ObjectType expectedObjectType = (ObjectType) expected;
+  	  ObjectType actualObjectType = (ObjectType) actual;
+  	  Set<String> actualObjectTypes = new HashSet<String>();
+  	  ClassEntry clazz = symbolTable.lookup(actualObjectType.name);
+  	  while (clazz != null) {
+  	    actualObjectTypes.add(clazz.className);
+  	    clazz = clazz.getSuperClass();
+  	  }
+  	  
+  	  return actualObjectTypes.contains(expectedObjectType.name);
 	  }
 	  
-	  return actualObjectTypes.contains(expectedObjectType.name);
+	  // one is object and the other is not
+	  return false;
 	}
 	
 	///////// Visitor implementation //////////////////////////////////////
