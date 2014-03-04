@@ -150,20 +150,16 @@ public class TranslateVisitor implements Visitor<TRExp> {
   public TRExp visit(LessThan n) {
     TRExp l = n.e1.accept(this);
     TRExp r = n.e2.accept(this);
-
     TEMP v = TEMP(new Temp());
-    return new Ex(ESEQ( SEQ( 
-        MOVE(v, FALSE),
-        CMOVE(RelOp.LT, l.unEx(), r.unEx(), v, TRUE)),
-        v));
+    return new Ex(ESEQ(SEQ(MOVE(v, FALSE),
+                           CMOVE(RelOp.LT, l.unEx(), r.unEx(), v, TRUE)),
+                       v));
   }
   
 	//////////////////////////////////////////////////////////////
 
 	private TRExp numericOp(Op op, Expression e1, Expression e2) {
-		TRExp l = e1.accept(this);
-		TRExp r = e2.accept(this);
-		return new Ex(BINOP(op, l.unEx(), r.unEx()));
+		return new Ex(BINOP(op, e1.accept(this).unEx(), e2.accept(this).unEx()));
 	}
 
 	@Override
@@ -209,8 +205,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(Not n) {
-		final TRExp negated = n.e.accept(this);
-		return new Ex(IR.BINOP(Op.MINUS, IR.CONST(1), negated.unEx()));
+		return new Ex(BINOP(Op.MINUS, CONST(1), n.e.accept(this).unEx()));
 	}
 
 	/**
