@@ -215,12 +215,14 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(MethodDecl n) {
+    // need one extra argument for the receiver object
     Frame frame = newFrame(Label.get(currentClass.className + "$" + n.name), n.formals.size() + 1);
     envs.push(FunTable.<Access>theEmpty());
     frames.push(frame); 
 
     // params
     for (int i = 0; i < n.formals.size(); i++) {
+      // first position is reserved for receiver object
       putEnv(n.formals.elementAt(i).name, frame.getFormal(i + 1));
     }
     
@@ -329,7 +331,6 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(This n) {
-  	// Not working, need to get access to caller class
     Access var = frames.peek().getFormal(0);
     return new Ex(var.exp(frames.peek().FP()));
   }
