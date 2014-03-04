@@ -8,7 +8,6 @@ import ir.temp.Label;
 import ir.temp.Temp;
 import ir.tree.BINOP.Op;
 import ir.tree.CJUMP.RelOp;
-import ir.tree.IR;
 import ir.tree.IRExp;
 import ir.tree.IRStm;
 import ir.tree.TEMP;
@@ -84,7 +83,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 		IRStm result = NOP;
 		for (int i = 0; i < ns.size(); i++) {
 			AST nextStm = ns.elementAt(i);
-			result = IR.SEQ(result, nextStm.accept(this).unNx());
+			result = SEQ(result, nextStm.accept(this).unNx());
 		}
 		return new Nx(result);
 	}
