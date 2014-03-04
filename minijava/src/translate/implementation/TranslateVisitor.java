@@ -253,7 +253,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
     n.vars.accept(this);
     n.methods.accept(this);
     currentClass = null;
-    return null;
+    return new Nx(NOP);
   }
 
   @Override
@@ -331,7 +331,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(ArrayLookup n) {
-    throw new Error("Not implemented");
+    Temp temp = new Temp();
+    return new Ex(ESEQ(MOVE(TEMP(temp),
+                            MEM(PLUS(n.array.accept(this).unEx(),
+                                     MUL(n.index.accept(this).unEx(), frames.peek().wordSize())))),
+                       TEMP(temp)));
   }
 
   @Override
