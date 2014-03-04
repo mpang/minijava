@@ -218,25 +218,16 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(MainClass n) {
-  	Frame mainFrame = newFrame(L_MAIN, 0);
+  	Frame mainFrame = newFrame(L_MAIN, 1);
     frames.push(mainFrame);
     envs.push(FunTable.<Access>theEmpty());
     currentClass = table.lookup(n.className);
     
-    IRStm stm = IR.NOP;
-    TRExp statements = n.statement.accept(this);
-    if (statements == null) {
-      envs.pop();
-      frames.pop();
-      return null;
-    } else {
-      IRExp e = statements.unEx();
-      stm = (e != null) ? IR.MOVE(mainFrame.RV(), e) : statements.unNx();
-      frags.add(new ProcFragment(mainFrame, mainFrame.procEntryExit1(stm)));
-      envs.pop();
-      frames.pop();
-      return null;
-    }
+    frags.add(new ProcFragment(mainFrame, mainFrame.procEntryExit1(n.statement.accept(this).unNx())));
+    envs.pop();
+    frames.pop();
+    currentClass = null;
+    return new Nx(NOP);
   }
 
   @Override
