@@ -25,7 +25,7 @@ public class ClassEntry extends DefaultIndentable {
     this.superClass = superClass;
   }
   
-  ClassEntry getSuperClass() {
+  public ClassEntry getSuperClass() {
     return superClass;
   }
   

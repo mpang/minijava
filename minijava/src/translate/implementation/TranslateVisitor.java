@@ -343,7 +343,12 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(NewObject n) {
-    int numBytes = table.lookup(n.typeName).getNumOfFields() * frames.peek().wordSize();
+    ClassEntry clazz = table.lookup(n.typeName);
+    int numBytes = 0;
+    while (clazz != null) {
+      numBytes += clazz.getNumOfFields() * frames.peek().wordSize();
+      clazz = clazz.getSuperClass();
+    }
     return new Ex(CALL(Translator.L_NEW_OBJECT, CONST(numBytes)));
   }
 
