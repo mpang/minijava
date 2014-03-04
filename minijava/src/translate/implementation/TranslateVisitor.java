@@ -301,7 +301,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(Block n) {
-    throw new Error("Not implemented");
+    return n.statements.accept(this);
   }
 
   @Override
@@ -326,7 +326,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(ArrayLength n) {
-    return new ArrayLookup(n.array, new IntegerLiteral(-1)).accept(this);
+    return visit(new ArrayLookup(n.array, new IntegerLiteral(-1)));
   }
 
   @Override
