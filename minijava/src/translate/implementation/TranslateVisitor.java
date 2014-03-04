@@ -99,25 +99,22 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	public TRExp visit(Program n) {
 	  n.classes.accept(this);
 	  n.mainClass.accept(this);
-	  
-
-	  return null;
+	  return new Nx(NOP);
 	}
 
 	@Override
 	public TRExp visit(BooleanType n) {
-		return null;
+	  return new Nx(NOP);
 	}
 
 	@Override
 	public TRExp visit(IntegerType n) {
-		return null;
+	  return new Nx(NOP);
 	}
 
 	@Override
 	public TRExp visit(Print n) {
-		TRExp arg = n.exp.accept(this);
-		return new Ex(CALL(Translator.L_PRINT, arg.unEx()));
+		return new Ex(CALL(Translator.L_PRINT, n.exp.accept(this).unEx()));
 	}
 
 	@Override
@@ -291,12 +288,12 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(IntArrayType n) {
-    return null;
+    return new Nx(NOP);
   }
 
   @Override
   public TRExp visit(ObjectType n) {
-    return null;
+    return new Nx(NOP);
   }
 
   @Override
