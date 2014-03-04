@@ -96,8 +96,10 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(Program n) {
-	  n.classes.accept(this);
 	  n.mainClass.accept(this);
+	  for (ClassDecl clazz : n.classes) {
+	    clazz.accept(this);
+	  }
 	  return new Nx(NOP);
 	}
 
@@ -192,14 +194,13 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	public TRExp visit(IdentifierExp n) {
 	  Frame frame = frames.peek();
 	  Access var = envs.peek().lookup(n.name);
-	  if (frame.equals(frames.peekLast()) || 
-		(var == null && !frame.equals(frames.peekLast()))) {
-		// Global variable lookup
-	    return new Ex(IR.MEM(IR.NAME(Label.get(n.name))));
-	  } else {
-		// Local variable lookup
-	    return new Ex(var.exp(frame.FP()));
-      }
+	  
+	  if (var == null) {
+	    int offset = currentClass.getOffsetOfField(n.name);
+	    return new Ex(MEM(PLUS(new This().accept(this).unEx(), offset * frame.wordSize())));
+	  }
+	  
+    return new Ex(var.exp(frame.FP()));
 	}
 
 	@Override
@@ -232,7 +233,9 @@ public class TranslateVisitor implements Visitor<TRExp> {
   @Override
   public TRExp visit(ClassDecl n) {
     currentClass = table.lookup(n.name);
-    n.methods.accept(this);
+    for (MethodDecl method : n.methods) {
+      method.accept(this);
+    }
     currentClass = null;
     return new Nx(NOP);
   }

@@ -1,5 +1,7 @@
 package typechecker.implementation;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 
 import util.DefaultIndentable;
@@ -45,6 +47,10 @@ public class ClassEntry extends DefaultIndentable {
     return superClass != null ? superClass.lookupField(fieldName) : null;
   }
   
+  ImpTable<Type> getFields() {
+    return fields;
+  }
+  
   MethodEntry lookupMethod(String methodName) {
     if (methods.containsKey(methodName)) {
       return methods.lookup(methodName);
@@ -59,6 +65,22 @@ public class ClassEntry extends DefaultIndentable {
   
   public int getNumOfFields() {
     return fields.size();
+  }
+  
+  /**
+   * Offset of a field within a class (includes the fields from its parent classes)
+   * @param fieldName
+   * @return
+   */
+  public int getOffsetOfField(String fieldName) {
+    List<String> allFields = new ArrayList<String>();
+    ClassEntry superClass = this.superClass;
+    while (superClass != null) {
+      allFields.addAll(0, superClass.getFields().keySet());
+      superClass = superClass.superClass;
+    }
+    allFields.addAll(fields.keySet());
+    return allFields.indexOf(fieldName);
   }
 
   @Override

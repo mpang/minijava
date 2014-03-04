@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.junit.Assert;
 
@@ -64,6 +65,10 @@ implements Iterable<Entry<String, V>>, Lookup<V>
 
 	public boolean containsKey(String key) {
     return map.containsKey(key);
+  }
+	
+  public Set<String> keySet() {
+    return map.keySet();
   }
 	
 	/**
