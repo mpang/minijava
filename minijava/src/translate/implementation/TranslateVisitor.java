@@ -1,6 +1,7 @@
 package translate.implementation;
 
 import static ir.tree.IR.*;
+import static translate.Translator.L_MAIN;
 import ir.frame.Access;
 import ir.frame.Frame;
 import ir.temp.Label;
@@ -8,6 +9,7 @@ import ir.temp.Temp;
 import ir.tree.BINOP.Op;
 import ir.tree.CJUMP.RelOp;
 import ir.tree.IR;
+import ir.tree.IRData;
 import ir.tree.IRExp;
 import ir.tree.IRStm;
 import ir.tree.TEMP;
@@ -15,6 +17,8 @@ import ir.tree.TEMP;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import translate.DataFragment;
+import translate.Fragment;
 import translate.Fragments;
 import translate.ProcFragment;
 import translate.Translator;
@@ -51,16 +55,17 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	private Frame frameFactory;
 	private Deque<Frame> frames; // stack of frames
 	private Deque<FunTable<Access>> envs; // stack of envs to preserve scoping
-	private ImpTable<ClassEntry> table;
-	
+
+	private ImpTable<ClassEntry> table; 
 	private ClassEntry currentClass;
 
 	public TranslateVisitor(ImpTable<ClassEntry> table, Frame frameFactory) {
 		frags = new Fragments(frameFactory);
-		this.frameFactory = frameFactory;
-		this.table = table;
 		frames = new ArrayDeque<Frame>();
 		envs = new ArrayDeque<FunTable<Access>>();
+		this.frameFactory = frameFactory;
+    this.table = table;
+    
 	}
 
 	/////// Helpers //////////////////////////////////////////////
@@ -88,9 +93,15 @@ public class TranslateVisitor implements Visitor<TRExp> {
 		return new Nx(result);
 	}
 
+	
+
 	@Override
 	public TRExp visit(Program n) {
-	  throw new Error("Not implemented");
+	  n.classes.accept(this);
+	  n.mainClass.accept(this);
+	  
+
+	  return null;
 	}
 
 	@Override
@@ -111,7 +122,31 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(Assign n) {
-	  throw new Error("Not implemented");
+	  // TODO: This was copied over from functions
+	  // Need to take into account different classes
+	  
+	  Frame frame = frames.peek();
+	  TRExp val = n.value.accept(this);
+	  
+	  if (frame.equals(frames.peekLast())) {
+	    // The "last" frame is the first frame (i.e. main())
+	    // Create default IRData (not supporting arrays currently...)
+	    List<IRExp> data = List.empty();
+	    data.add(CONST(0)); // Filling in with default value
+	    IRData irdata = DATA(Label.get(n.name), data);
+
+	    // Creating DataFragment and adding
+	    Fragment global = new DataFragment(frame, irdata);
+	    frags.add(global);
+
+	    // Update Global Variable
+	    return new Nx(MOVE(MEM(NAME(Label.get(n.name))), val.unEx()));
+	  } else {
+	    // Place local variable into local frame
+      Access var = frame.allocLocal(false);
+      putEnv(n.name, var);
+      return new Nx(MOVE(var.exp(frame.FP()), val.unEx()));
+	  }
 	}
 
   @Override
@@ -191,20 +226,42 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(MainClass n) {
-    throw new Error("Not implemented");
+  	Frame mainFrame = newFrame(L_MAIN, 0);
+    frames.push(mainFrame);
+    envs.push(FunTable.<Access>theEmpty());
+    currentClass = table.lookup(n.className);
+    
+    IRStm stm = IR.NOP;
+    TRExp statements = n.statement.accept(this);
+    if (statements == null) {
+      envs.pop();
+      frames.pop();
+      return null;
+    } else {
+      IRExp e = statements.unEx();
+      stm = (e != null) ? IR.MOVE(mainFrame.RV(), e) : statements.unNx();
+      frags.add(new ProcFragment(mainFrame, mainFrame.procEntryExit1(stm)));
+      envs.pop();
+      frames.pop();
+      return null;
+    }
   }
 
   @Override
   public TRExp visit(ClassDecl n) {
-    throw new Error("Not implemented");
+    currentClass = table.lookup(n.name);
+    n.vars.accept(this);
+    n.methods.accept(this);
+    currentClass = null;
+    return null;
   }
 
   @Override
   public TRExp visit(MethodDecl n) {
     Frame frame = newFrame(Label.get(currentClass.className + "$" + n.name), n.formals.size());
-    frames.push(frame);
     envs.push(FunTable.<Access>theEmpty());
-    
+    frames.push(frame); 
+
     // params
     for (int i = 0; i < n.formals.size(); i++) {
       putEnv(n.formals.elementAt(i).name, frame.getFormal(i));
@@ -214,13 +271,13 @@ public class TranslateVisitor implements Visitor<TRExp> {
     for (VarDecl local : n.vars) {
       putEnv(local.name, frame.allocLocal(false));
     }
-    
+  
     // body
-    IRExp body = n.statements.size() > 0 ? ESEQ(n.statements.accept(this).unNx(),
-                                                n.returnExp.accept(this).unEx())
-                                         : n.returnExp.accept(this).unEx();
+    IRExp exp = n.statements.size() > 0 ? ESEQ(n.statements.accept(this).unNx(),
+                                               n.returnExp.accept(this).unEx())
+                                        : n.returnExp.accept(this).unEx();
     
-    frags.add(new ProcFragment(frame, frame.procEntryExit1(MOVE(frame.RV(), body))));
+    frags.add(new ProcFragment(frame, frame.procEntryExit1(MOVE(frame.RV(), exp))));
     frames.pop();
     envs.pop();
     
@@ -305,6 +362,8 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(This n) {
-    throw new Error("Not implemented");
+  	// Not working, need to get access to caller class
+    Access var = frames.peek().getFormal(0);
+    return new Ex(var.exp(frames.peek().FP()));
   }
 }
