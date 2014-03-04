@@ -307,7 +307,15 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(While n) {
-    throw new Error("Not implemented");
+    Label test = Label.gen();
+    Label body = Label.gen();
+    Label done = Label.gen();
+    return new Nx(SEQ(LABEL(test),
+                      n.tst.accept(this).unCx(body, done),
+                      LABEL(body),
+                      n.body.accept(this).unNx(),
+                      JUMP(test),
+                      LABEL(done)));
   }
 
   @Override
