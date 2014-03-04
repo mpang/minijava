@@ -9,7 +9,6 @@ import ir.temp.Temp;
 import ir.tree.BINOP.Op;
 import ir.tree.CJUMP.RelOp;
 import ir.tree.IR;
-import ir.tree.IRData;
 import ir.tree.IRExp;
 import ir.tree.IRStm;
 import ir.tree.TEMP;
@@ -17,8 +16,6 @@ import ir.tree.TEMP;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import translate.DataFragment;
-import translate.Fragment;
 import translate.Fragments;
 import translate.ProcFragment;
 import translate.Translator;
@@ -120,31 +117,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(Assign n) {
-	  // TODO: This was copied over from functions
-	  // Need to take into account different classes
-	  
-	  Frame frame = frames.peek();
-	  TRExp val = n.value.accept(this);
-	  
-	  if (frame.equals(frames.peekLast())) {
-	    // The "last" frame is the first frame (i.e. main())
-	    // Create default IRData (not supporting arrays currently...)
-	    List<IRExp> data = List.empty();
-	    data.add(CONST(0)); // Filling in with default value
-	    IRData irdata = DATA(Label.get(n.name), data);
-
-	    // Creating DataFragment and adding
-	    Fragment global = new DataFragment(frame, irdata);
-	    frags.add(global);
-
-	    // Update Global Variable
-	    return new Nx(MOVE(MEM(NAME(Label.get(n.name))), val.unEx()));
-	  } else {
-	    // Place local variable into local frame
-      Access var = frame.allocLocal(false);
-      putEnv(n.name, var);
-      return new Nx(MOVE(var.exp(frame.FP()), val.unEx()));
-	  }
+	  return new Nx(MOVE(new IdentifierExp(n.name).accept(this).unEx(), n.value.accept(this).unEx()));
 	}
 
   @Override
