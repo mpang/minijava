@@ -29,7 +29,6 @@ import util.List;
 import visitor.Visitor;
 import ast.*;
 
-
 /**
  * This visitor builds up a collection of IRTree code fragments for the body
  * of methods in a minijava program.
@@ -85,7 +84,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public <T extends AST> TRExp visit(NodeList<T> ns) {
-		IRStm result = IR.NOP;
+		IRStm result = NOP;
 		for (int i = 0; i < ns.size(); i++) {
 			AST nextStm = ns.elementAt(i);
 			result = IR.SEQ(result, nextStm.accept(this).unNx());
@@ -240,13 +239,13 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(MethodDecl n) {
-    Frame frame = newFrame(Label.get(currentClass.className + "$" + n.name), n.formals.size());
+    Frame frame = newFrame(Label.get(currentClass.className + "$" + n.name), n.formals.size() + 1);
     envs.push(FunTable.<Access>theEmpty());
     frames.push(frame); 
 
     // params
     for (int i = 0; i < n.formals.size(); i++) {
-      putEnv(n.formals.elementAt(i).name, frame.getFormal(i));
+      putEnv(n.formals.elementAt(i).name, frame.getFormal(i + 1));
     }
     
     // locals
