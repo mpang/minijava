@@ -331,11 +331,8 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(ArrayLookup n) {
-    Temp temp = new Temp();
-    return new Ex(ESEQ(MOVE(TEMP(temp),
-                            MEM(PLUS(n.array.accept(this).unEx(),
-                                     MUL(n.index.accept(this).unEx(), frames.peek().wordSize())))),
-                       TEMP(temp)));
+    return new Ex(MEM(PLUS(n.array.accept(this).unEx(),
+                           MUL(n.index.accept(this).unEx(), frames.peek().wordSize()))));
   }
 
   @Override
@@ -349,19 +346,13 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(NewArray n) {
-    Temp temp = new Temp();
-    return new Ex(ESEQ(MOVE(TEMP(temp),
-                            CALL(Translator.L_NEW_ARRAY, n.size.accept(this).unEx())),
-                       TEMP(temp)));
+    return new Ex(CALL(Translator.L_NEW_ARRAY, n.size.accept(this).unEx()));
   }
 
   @Override
   public TRExp visit(NewObject n) {
-    Temp temp = new Temp();
     int numBytes = table.lookup(n.typeName).getNumOfFields() * frames.peek().wordSize();
-    return new Ex(ESEQ(MOVE(TEMP(temp),
-                            CALL(Translator.L_NEW_OBJECT, CONST(numBytes))),
-                       TEMP(temp)));
+    return new Ex(CALL(Translator.L_NEW_OBJECT, CONST(numBytes)));
   }
 
   @Override
