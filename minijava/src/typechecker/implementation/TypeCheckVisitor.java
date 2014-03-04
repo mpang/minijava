@@ -309,7 +309,8 @@ public class TypeCheckVisitor implements Visitor<Type> {
       check(n.rands.elementAt(i), methodSignature.getParameterTypes().get(i));
     }
     
-    return methodSignature.getReturnType();
+    n.setType(methodSignature.getReturnType());
+    return n.getType();
   }
 
   @Override
