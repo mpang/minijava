@@ -302,7 +302,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(If n) {
-    throw new Error("Not implemented");
+    return new IfThenElse(n.tst.accept(this), n.thn.accept(this), n.els.accept(this));
   }
 
   @Override
