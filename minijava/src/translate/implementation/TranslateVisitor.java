@@ -247,7 +247,6 @@ public class TranslateVisitor implements Visitor<TRExp> {
   @Override
   public TRExp visit(ClassDecl n) {
     currentClass = table.lookup(n.name);
-    n.vars.accept(this);
     n.methods.accept(this);
     currentClass = null;
     return new Nx(NOP);
@@ -283,7 +282,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(VarDecl n) {
-    throw new Error("Not implemented");
+    return new Nx(NOP);
   }
 
   @Override
