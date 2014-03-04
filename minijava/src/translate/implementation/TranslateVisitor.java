@@ -155,6 +155,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
   public TRExp visit(And n) {
     return numericOp(Op.AND, n.e1, n.e2);
   }
+	
+	@Override
+  public TRExp visit(Not n) {
+    return numericOp(Op.MINUS, new IntegerLiteral(1), n.e);
+  }
 
 	//////////////////////////////////////////////////////////////////
 
@@ -174,11 +179,6 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	  }
 	  
     return new Ex(var.exp(frame.FP()));
-	}
-
-	@Override
-	public TRExp visit(Not n) {
-		return new Ex(BINOP(Op.MINUS, CONST(1), n.e.accept(this).unEx()));
 	}
 
 	/**
