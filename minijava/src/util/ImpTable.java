@@ -1,7 +1,7 @@
 package util;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -30,7 +30,7 @@ implements Iterable<Entry<String, V>>, Lookup<V>
 
 	}
 
-	private Map<String, V> map = new HashMap<String, V>();
+	private Map<String, V> map = new LinkedHashMap<String, V>();
 
 	@Override
 	public Iterator<Entry<String,V>> iterator() {
