@@ -294,7 +294,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(ArrayLength n) {
-    return visit(new ArrayLookup(n.array, new IntegerLiteral(-1)));
+    return new Ex(MEM(MINUS(n.array.accept(this).unEx(), frames.peek().wordSize())));
   }
 
   @Override
