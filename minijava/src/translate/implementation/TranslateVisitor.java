@@ -225,13 +225,16 @@ public class TranslateVisitor implements Visitor<TRExp> {
       putEnv(n.formals.elementAt(i).name, frame.getFormal(i + 1));
     }
     
+    IRStm inits = NOP;
     // locals
     for (VarDecl local : n.vars) {
       putEnv(local.name, frame.allocLocal(false));
+      // initialize local variables to 0
+      inits = SEQ(inits, MOVE(envs.peek().lookup(local.name).exp(frame.FP()), CONST(0)));
     }
   
     // body
-    IRExp exp = n.statements.size() > 0 ? ESEQ(n.statements.accept(this).unNx(),
+    IRExp exp = n.statements.size() > 0 ? ESEQ(SEQ(inits, n.statements.accept(this).unNx()),
                                                n.returnExp.accept(this).unEx())
                                         : n.returnExp.accept(this).unEx();
     
@@ -323,7 +326,19 @@ public class TranslateVisitor implements Visitor<TRExp> {
       args.add(arg.accept(this).unEx());
     }
     
-    return new Ex(CALL(Label.get(n.receiver.getType().toString() + "$" + n.name), args));
+    TRExp test = new Ex(n.receiver.accept(this).unEx());
+    Temp temp = new Temp();
+    Label error = Label.gen();
+    Label nonError = Label.gen();
+    Label join = Label.gen();
+    return new Ex(ESEQ(SEQ(test.unCx(nonError, error),
+                           LABEL(nonError),
+                           MOVE(temp, CALL(Label.get(n.receiver.getType().toString() + "$" + n.name), args)),
+                           JUMP(join),
+                           LABEL(error),
+                           MOVE(temp, CALL(Translator.L_ERROR, CONST(2))),
+                           LABEL(join)),
+                  TEMP(temp)));
   }
 
   @Override
