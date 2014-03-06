@@ -4,6 +4,5 @@ Type-checking:
 - test against broken programs
 
 Translation:
-- error checking: array index out of bound
 - error checking: null reference
 - dynamic method dispatch (optional)

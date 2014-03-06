@@ -299,8 +299,25 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(ArrayLookup n) {
-    return new Ex(MEM(PLUS(n.array.accept(this).unEx(),
-                           MUL(n.index.accept(this).unEx(), frames.peek().wordSize()))));
+    TRExp test = numericOp(Op.AND,
+                           // -1 < index
+                           new LessThan(new IntegerLiteral(-1), n.index),
+                           // index < array.length
+                           new LessThan(n.index, new ArrayLength(n.array)));
+    Temp temp = new Temp();
+    Label error = Label.gen();
+    Label nonError = Label.gen();
+    Label join = Label.gen();
+    return new Ex(ESEQ(SEQ(test.unCx(nonError, error),
+                           LABEL(nonError),
+                           MOVE(temp,
+                                MEM(PLUS(n.array.accept(this).unEx(),
+                                         MUL(n.index.accept(this).unEx(), frames.peek().wordSize())))),
+                           JUMP(join),
+                           LABEL(error),
+                           MOVE(temp, CALL(Translator.L_ERROR, CONST(1))),
+                           LABEL(join)),
+                  TEMP(temp)));
   }
 
   @Override
