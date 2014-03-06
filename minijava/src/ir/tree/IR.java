@@ -1,11 +1,11 @@
 package ir.tree;
 
-import util.List;
 import ir.interp.Int;
 import ir.temp.Label;
 import ir.temp.Temp;
 import ir.tree.BINOP.Op;
 import ir.tree.CJUMP.RelOp;
+import util.List;
 
 /**
  * This class has a bunch of static helper methods here to
@@ -25,6 +25,9 @@ public class IR {
 	 * A statement that doesn't do anything:
 	 */
 	public static final IRStm NOP = EXP(CONST(0));
+	
+	public static final IRExp INDEX_OUT_OF_BOUND = CONST(1);
+	public static final IRExp NULL_OBJECT_REFERENCE = CONST(2);
 
 	public static IRExp BINOP(Op op, IRExp l, IRExp r) {
 		BINOP result = new BINOP(op, l, r);

@@ -314,7 +314,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
                                          MUL(n.index.accept(this).unEx(), frames.peek().wordSize())))),
                            JUMP(join),
                            LABEL(error),
-                           MOVE(temp, CALL(Translator.L_ERROR, CONST(1))),
+                           MOVE(temp, CALL(Translator.L_ERROR, INDEX_OUT_OF_BOUND)),
                            LABEL(join)),
                   TEMP(temp)));
   }
@@ -336,7 +336,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
                            MOVE(temp, CALL(Label.get(n.receiver.getType().toString() + "$" + n.name), args)),
                            JUMP(join),
                            LABEL(error),
-                           MOVE(temp, CALL(Translator.L_ERROR, CONST(2))),
+                           MOVE(temp, CALL(Translator.L_ERROR, NULL_OBJECT_REFERENCE)),
                            LABEL(join)),
                   TEMP(temp)));
   }
