@@ -4,5 +4,4 @@ Type-checking:
 - test against broken programs
 
 Translation:
-- error checking: null reference
 - dynamic method dispatch (optional)
