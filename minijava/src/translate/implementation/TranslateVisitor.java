@@ -1,7 +1,11 @@
 package translate.implementation;
 
 import static ir.tree.IR.*;
+import static translate.Translator.L_ERROR;
 import static translate.Translator.L_MAIN;
+import static translate.Translator.L_NEW_ARRAY;
+import static translate.Translator.L_NEW_OBJECT;
+import static translate.Translator.L_PRINT;
 import ir.frame.Access;
 import ir.frame.Frame;
 import ir.temp.Label;
@@ -17,7 +21,6 @@ import java.util.Deque;
 
 import translate.Fragments;
 import translate.ProcFragment;
-import translate.Translator;
 import typechecker.implementation.ClassEntry;
 import util.FunTable;
 import util.ImpTable;
@@ -111,7 +114,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	@Override
 	public TRExp visit(Print n) {
-		return new Ex(CALL(Translator.L_PRINT, n.exp.accept(this).unEx()));
+		return new Ex(CALL(L_PRINT, n.exp.accept(this).unEx()));
 	}
 
 	@Override
@@ -314,7 +317,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
                                          MUL(n.index.accept(this).unEx(), frames.peek().wordSize())))),
                            JUMP(join),
                            LABEL(error),
-                           MOVE(temp, CALL(Translator.L_ERROR, INDEX_OUT_OF_BOUND)),
+                           MOVE(temp, CALL(L_ERROR, INDEX_OUT_OF_BOUND)),
                            LABEL(join)),
                   TEMP(temp)));
   }
@@ -336,14 +339,14 @@ public class TranslateVisitor implements Visitor<TRExp> {
                            MOVE(temp, CALL(Label.get(n.receiver.getType().toString() + "$" + n.name), args)),
                            JUMP(join),
                            LABEL(error),
-                           MOVE(temp, CALL(Translator.L_ERROR, NULL_OBJECT_REFERENCE)),
+                           MOVE(temp, CALL(L_ERROR, NULL_OBJECT_REFERENCE)),
                            LABEL(join)),
                   TEMP(temp)));
   }
 
   @Override
   public TRExp visit(NewArray n) {
-    return new Ex(CALL(Translator.L_NEW_ARRAY, n.size.accept(this).unEx()));
+    return new Ex(CALL(L_NEW_ARRAY, n.size.accept(this).unEx()));
   }
 
   @Override
@@ -354,7 +357,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
       numBytes += clazz.getNumOfFields() * frames.peek().wordSize();
       clazz = clazz.getSuperClass();
     }
-    return new Ex(CALL(Translator.L_NEW_OBJECT, CONST(numBytes)));
+    return new Ex(CALL(L_NEW_OBJECT, CONST(numBytes)));
   }
 
   @Override
