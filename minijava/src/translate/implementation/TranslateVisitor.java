@@ -231,15 +231,15 @@ public class TranslateVisitor implements Visitor<TRExp> {
     IRStm inits = NOP;
     // locals
     for (VarDecl local : n.vars) {
-      putEnv(local.name, frame.allocLocal(false));
+      Access var = frame.allocLocal(false);
+      putEnv(local.name, var);
       // initialize local variables to 0
-      inits = SEQ(inits, MOVE(envs.peek().lookup(local.name).exp(frame.FP()), CONST(0)));
+      inits = SEQ(inits, MOVE(var.exp(frame.FP()), CONST(0)));
     }
   
     // body
-    IRExp exp = n.statements.size() > 0 ? ESEQ(SEQ(inits, n.statements.accept(this).unNx()),
-                                               n.returnExp.accept(this).unEx())
-                                        : n.returnExp.accept(this).unEx();
+    IRExp exp = ESEQ(SEQ(inits, n.statements.accept(this).unNx()),
+                     n.returnExp.accept(this).unEx());
     
     frags.add(new ProcFragment(frame, frame.procEntryExit1(MOVE(frame.RV(), exp))));
     frames.pop();
@@ -362,7 +362,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(This n) {
-    Access var = frames.peek().getFormal(0);
-    return new Ex(var.exp(frames.peek().FP()));
+    Frame frame = frames.peek();
+    return new Ex(frame.getFormal(0).exp(frame.FP()));
   }
 }
