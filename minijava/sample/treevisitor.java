@@ -14,8 +14,8 @@ class TV {
     Tree root;
     boolean ntb;
     int nti;
-    //MyVisitor v;
-    Visitor v;
+    MyVisitor v;
+    //Visitor v;
     
     root = new Tree();
     ntb = root.Init(16);
@@ -30,8 +30,8 @@ class TV {
     ntb = root.Insert(14);
     ntb = root.Print();
     System.out.println(100000000);
-    //v = new MyVisitor();
-    v = new Visitor();
+    v = new MyVisitor();
+    //v = new Visitor();
     System.out.println(50000000);
     nti = root.accept(v);
     System.out.println(100000000);
@@ -316,14 +316,13 @@ class Tree {
     return true;
   }
 
-  public int accept(Visitor v) {
+  public int accept(MyVisitor v) {
     int nti;
 
     System.out.println(333);
     nti = v.visit(this);
     return 0;
   }
-
 }
 
 class Visitor {
@@ -335,13 +334,13 @@ class Visitor {
 
     if (n.GetHas_Right()) {
       r = n.GetRight();
-      nti = r.accept(this);
+      //nti = r.accept(this);
     } else
       nti = 0;
 
     if (n.GetHas_Left()) {
       l = n.GetLeft();
-      nti = l.accept(this);
+      //nti = l.accept(this);
     } else
       nti = 0;
 
