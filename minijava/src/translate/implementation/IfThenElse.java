@@ -4,6 +4,7 @@ import static ir.tree.IR.ESEQ;
 import static ir.tree.IR.JUMP;
 import static ir.tree.IR.LABEL;
 import static ir.tree.IR.MOVE;
+import static ir.tree.IR.NOP;
 import static ir.tree.IR.SEQ;
 import static ir.tree.IR.TEMP;
 import ir.temp.Label;
@@ -52,12 +53,14 @@ public class IfThenElse extends TRExp {
 
   @Override
   public IRStm unCx(Label ifTrue, Label ifFalse) {
-    return null;
+    // TODO might need to implement it later, but there's no need for now
+    return NOP;
   }
 
   @Override
   public IRStm unCx(IRExp dst, IRExp src) {
-    return null;
+    // TODO might need to implement it later, but there's no need for now
+    return NOP;
   }
 
 }
