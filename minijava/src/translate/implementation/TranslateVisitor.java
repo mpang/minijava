@@ -305,21 +305,10 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(ArrayLookup n) {
-    TRExp test = new LessThan(n.index, new ArrayLength(n.array)).accept(this);
-    Temp temp = new Temp();
-    Label error = Label.gen();
-    Label nonError = Label.gen();
-    Label join = Label.gen();
-    return new Ex(ESEQ(SEQ(test.unCx(nonError, error),
-                           LABEL(nonError),
-                           MOVE(temp,
-                                MEM(PLUS(n.array.accept(this).unEx(),
-                                         MUL(n.index.accept(this).unEx(), frames.peek().wordSize())))),
-                           JUMP(join),
-                           LABEL(error),
-                           MOVE(temp, CALL(L_ERROR, INDEX_OUT_OF_BOUND)),
-                           LABEL(join)),
-                  TEMP(temp)));
+    return new Ex(new IfThenElse(new LessThan(n.index, new ArrayLength(n.array)).accept(this),
+                                 new Ex(MEM(PLUS(n.array.accept(this).unEx(),
+                                                 MUL(n.index.accept(this).unEx(), frames.peek().wordSize())))),
+                                 new Ex(CALL(L_ERROR, INDEX_OUT_OF_BOUND))).unEx());
   }
 
   @Override
@@ -329,19 +318,9 @@ public class TranslateVisitor implements Visitor<TRExp> {
       args.add(arg.accept(this).unEx());
     }
     
-    TRExp test = new Ex(n.receiver.accept(this).unEx());
-    Temp temp = new Temp();
-    Label error = Label.gen();
-    Label nonError = Label.gen();
-    Label join = Label.gen();
-    return new Ex(ESEQ(SEQ(test.unCx(nonError, error),
-                           LABEL(nonError),
-                           MOVE(temp, CALL(Label.get(n.receiver.getType().toString() + "$" + n.name), args)),
-                           JUMP(join),
-                           LABEL(error),
-                           MOVE(temp, CALL(L_ERROR, NULL_OBJECT_REFERENCE)),
-                           LABEL(join)),
-                  TEMP(temp)));
+    return new Ex(new IfThenElse(new Ex(n.receiver.accept(this).unEx()),
+                                 new Ex(CALL(Label.get(n.receiver.getType().toString() + "$" + n.name), args)),
+                                 new Ex(CALL(L_ERROR, NULL_OBJECT_REFERENCE))).unEx());
   }
 
   @Override
