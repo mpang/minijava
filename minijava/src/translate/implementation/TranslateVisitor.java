@@ -288,9 +288,9 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
   @Override
   public TRExp visit(ArrayAssign n) {
-    return new Nx(new IfThenElse(new LessThan(n.index,
-                                              new ArrayLength(new IdentifierExp(n.name))).accept(this),
-                                 new Nx(MOVE(MEM(PLUS(new IdentifierExp(n.name).accept(this).unEx(),
+    IdentifierExp array = new IdentifierExp(n.name);
+    return new Nx(new IfThenElse(new LessThan(n.index, new ArrayLength(array)).accept(this),
+                                 new Nx(MOVE(MEM(PLUS(array.accept(this).unEx(),
                                                       MUL(n.index.accept(this).unEx(),
                                                           frames.peek().wordSize()))),
                                              n.value.accept(this).unEx())),
