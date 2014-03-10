@@ -55,7 +55,7 @@ public class TestTranslate {
 	 * will be printed.
 	 */
 	protected boolean dumpIR() {
-		return true;
+		return false;
 	}
 
 	//////////////// Sample code //////////////////////////////////
