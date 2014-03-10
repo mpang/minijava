@@ -1,19 +1,18 @@
 package x86_64sim.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 import org.junit.Test;
 
+import util.SampleCode;
 import x86_64sim.Program;
 import x86_64sim.Sim;
 import x86_64sim.State;
 import x86_64sim.parser.SimParser;
-import util.SampleCode;
 
 public class TestX86_64SimExecute {
 	protected State accept(String input) throws Exception {
@@ -41,6 +40,7 @@ public class TestX86_64SimExecute {
 		State s = null;
 		String outname = null;
 		String outtmpname = null;
+		
 		try {
 			System.out.println("parsing file: "+file);
 			p = SimParser.parse(file);
@@ -56,11 +56,17 @@ public class TestX86_64SimExecute {
 		} catch (Error e) {
 			System.out.println(e.getMessage());
 		}
+		
 		System.out.println("Static: " + p.countInstructions() + " instructions generated");
 		System.out.println("Dynamic: " + s.instructionsExecuted + " instructions executed");
 		System.out.println("Running diff ...");
 		Process proc = Runtime.getRuntime().exec("diff -c " + outname + " " + outtmpname);
 		proc.waitFor();
+		
+		if (proc.exitValue() != 0) {
+		  throw new Error("Error: Acutal output: " + outtmpname + "different than expected: " + outname);
+		}
+		
 		if (outtmpname != null) {
 			File out = new File(outtmpname);
 			if (!out.delete()) 
