@@ -62,7 +62,7 @@ public class TestTranslate {
 	
 	@Test
 	public void testSampleCode() throws Exception {
-		File[] files = SampleCode.sampleFiles("java");
+		File[] files = SampleCode.sampleJavaFiles();
 		for (int i = 0; i < files.length; i++) {
 			File f = files[i];
 			if (!optionalSample(f))
@@ -71,7 +71,7 @@ public class TestTranslate {
 	}
 	@Test @Ignore // Don't run this unless you are implementing inheritance support!
 	public void testOptionalSampleCode() throws Exception {
-		File[] files = SampleCode.sampleFiles("java");
+		File[] files = SampleCode.sampleJavaFiles();
 		for (int i = 0; i < files.length; i++) {
 			File f = files[i];
 			if (optionalSample(f))

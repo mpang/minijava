@@ -68,7 +68,7 @@ public class TestTypeCheckPhase2 {
 	}
 	
 	@Test public void testSampleCode() throws Exception {
-		File[] sampleFiles = SampleCode.sampleFiles("java");
+		File[] sampleFiles = SampleCode.sampleJavaFiles();
 		for (int i = 0; i < sampleFiles.length; i++) {
 		  TypeChecker.parseAndCheck(sampleFiles[i]);
 		}

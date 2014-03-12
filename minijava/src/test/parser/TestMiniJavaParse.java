@@ -79,7 +79,7 @@ public class TestMiniJavaParse {
 	
 	@Test 
   public void testParseSampleCode() throws Exception {
-    File[] files = SampleCode.sampleFiles("java");
+    File[] files = SampleCode.sampleJavaFiles();
     for (File file : files) {
       accept(file);
     }
