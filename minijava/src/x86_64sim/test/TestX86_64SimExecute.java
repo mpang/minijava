@@ -54,7 +54,7 @@ public class TestX86_64SimExecute {
 			s.beVerbose = false;
 			s.run(out);
 		} catch (Error e) {
-			System.out.println(e.getMessage());
+			throw e;
 		}
 		
 		System.out.println("Static: " + p.countInstructions() + " instructions generated");
