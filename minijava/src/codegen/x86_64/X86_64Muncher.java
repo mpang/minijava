@@ -91,8 +91,10 @@ public class X86_64Muncher extends Muncher {
       }
     };
 
-    // A basic set of small tiles.
+    // ############ A basic set of small tiles ############
 
+    // ############ statements ############
+    
     sm.add(new MunchRule<IRStm, Void>(LABEL(_lab_)) {
       @Override
       protected Void trigger(Muncher m, Matched children) {
@@ -100,7 +102,9 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
+    
     sm.add(new MunchRule<IRStm, Void>(JUMP(_e_)) {
+      @Override
       protected Void trigger(Muncher m, Matched children) {
         // Expression shouldn't need to emit indirect jumps.
         // (assuming there's a rule to match JUMP(NAME(*))
@@ -115,6 +119,7 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
+    
     sm.add(new MunchRule<IRStm, Void>(MOVE(TEMP(_t_), _e_)) {
       @Override
       protected Void trigger(Muncher m, Matched c) {
@@ -122,6 +127,7 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
+    
     sm.add(new MunchRule<IRStm, Void>(MOVE(MEM(_l_), _r_)) {
       @Override
       protected Void trigger(Muncher m, Matched c) {
@@ -131,6 +137,7 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
+    
     sm.add(new MunchRule<IRStm, Void>(JUMP(NAME(_lab_))) {
       @Override
       protected Void trigger(Muncher m, Matched c) {
@@ -146,6 +153,7 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
+    
     sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, _r_, TEMP(_t_), _e_)) {
       @Override
       protected Void trigger(Muncher m, Matched c) {
@@ -154,6 +162,10 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
+    
+    
+    // ############ expressions ############
+    
     em.add(new MunchRule<IRExp, Temp>(CALL(_l_, _es_)) {
       @Override
       protected Temp trigger(Muncher m, Matched children) {
@@ -162,6 +174,7 @@ public class X86_64Muncher extends Muncher {
         throw new Error("Not implemented");
       }
     });
+    
     em.add(new MunchRule<IRExp, Temp>(CONST(_i_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -170,6 +183,7 @@ public class X86_64Muncher extends Muncher {
         return t;
       }
     });
+    
     em.add(new MunchRule<IRExp, Temp>(AND(_l_, _r_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -179,6 +193,7 @@ public class X86_64Muncher extends Muncher {
         return res;
       }
     });
+    
     em.add(new MunchRule<IRExp, Temp>(PLUS(_l_, _r_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -188,6 +203,7 @@ public class X86_64Muncher extends Muncher {
         return sum;
       }
     });
+    
     em.add(new MunchRule<IRExp, Temp>(MINUS(_l_, _r_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -197,6 +213,7 @@ public class X86_64Muncher extends Muncher {
         return res;
       }
     });
+    
     em.add(new MunchRule<IRExp, Temp>(MUL(_l_, _r_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -206,12 +223,14 @@ public class X86_64Muncher extends Muncher {
         return res;
       }
     });
+    
     em.add(new MunchRule<IRExp, Temp>(TEMP(_t_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
         return c.get(_t_);
       }
     });
+    
     em.add(new MunchRule<IRExp, Temp>(MEM(_e_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -220,6 +239,7 @@ public class X86_64Muncher extends Muncher {
         return r;
       }
     });
+    
     em.add(new MunchRule<IRExp, Temp>(CALL(NAME(_lab_), _es_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -233,7 +253,49 @@ public class X86_64Muncher extends Muncher {
         m.emit(A_CALL(name, args.size()));
         return RV;
       }
-
+    });
+    
+    // ############ more complicated ones ############
+    
+    // ############ statements ############
+    /*
+    sm.add(new MunchRule<IRStm, Void>(MOVE(MEM(PLUS(_l_, CONST(_i_))), _e_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_MOV_TO_MEM(c.get(_i_), m.munch(c.get(_l_)), m.munch(c.get(_e_))));
+        return null;
+      }
+    });
+    */
+    // ############ expressions ############
+    
+    em.add(new MunchRule<IRExp, Temp>(PLUS(CONST(_i_), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(c.get(_r_))));
+        m.emit(A_ADD(c.get(_i_), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(PLUS(MEM(PLUS(_l_, CONST(_i_))), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(c.get(_r_))));
+        m.emit(A_ADD(c.get(_i_), m.munch(c.get(_l_)), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(MEM(PLUS(_l_, CONST(_i_)))) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV_FROM_MEM(c.get(_i_), m.munch(c.get(_l_)), temp));
+        return temp;
+      }
     });
   }
 
@@ -244,6 +306,14 @@ public class X86_64Muncher extends Muncher {
     return new A_OPER("addq    `s0, `d0", list(dst), list(src, dst));
   }
 
+  private static Instr A_ADD(int c, Temp dst) {
+    return new A_OPER("addq    $" + c + ", `d0", list(dst), noTemps);
+  }
+  
+  private static Instr A_ADD(int offset, Temp ptr, Temp dst) {
+    return new A_OPER("addq    " + offset + "(`s0), `d0", list(dst), list(ptr));
+  }
+  
   private static Instr A_AND(Temp dst, Temp src) {
     return new A_OPER("andq    `s0, `d0", list(dst), list(src, dst));
   }
@@ -372,8 +442,16 @@ public class X86_64Muncher extends Muncher {
     return new A_OPER("movq    `s1, (`s0)", noTemps, list(ptr, s));
   }
 
+  private static Instr A_MOV_TO_MEM(int offset, Temp ptr, Temp src) {
+    return new A_OPER("movq    `s0, " + offset + "('d0)", list(ptr), list(src));
+  }
+  
   private static Instr A_MOV_FROM_MEM(Temp d, Temp ptr) {
     return new A_OPER("movq    (`s0), `d0", list(d), list(ptr));
+  }
+  
+  private static Instr A_MOV_FROM_MEM(int offset, Temp ptr, Temp dst) {
+    return new A_OPER("movq    " + offset + "(`s0), `d0", list(dst), list(ptr));
   }
 
   private static Instr A_SUB(Temp dst, Temp src) {

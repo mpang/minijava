@@ -147,7 +147,7 @@ void Instruction(Program p) : {
   	{ p.add(new AddI2R(source, target)); }
 | 	< ADD > source = Register() < COMMA > target = Register()
 	{ p.add(new AddR2R(source, target)); }
-|  	< CALL > target = Identifier()
+| 	< ADD > offset = Integer() < LPAREN > source = Register() < RPAREN > <COMMA > target = Register()	{ p.add(new AddIM2R(offset, source, target)); }|  	< CALL > target = Identifier()
   	{ p.add(new Call(target)); }
 |  	< CALL > < STAR > target = Register()
   	{ p.add(new Call("*", target)); }
