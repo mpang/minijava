@@ -218,7 +218,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
   @Override
   public TRExp visit(MethodDecl n) {
     // need one extra argument for the receiver object
-    Frame frame = newFrame(Label.get(currentClass.className + "$" + n.name), n.formals.size() + 1);
+    Frame frame = newFrame(Label.get(currentClass.className + "_" + n.name), n.formals.size() + 1);
     envs.push(FunTable.<Access>theEmpty());
     frames.push(frame); 
 
@@ -324,7 +324,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
     }
     
     return new Ex(new IfThenElse(new Ex(n.receiver.accept(this).unEx()),
-                                 new Ex(CALL(Label.get(n.receiver.getType().toString() + "$" + n.name),
+                                 new Ex(CALL(Label.get(n.receiver.getType().toString() + "_" + n.name),
                                              args)),
                                  new Ex(CALL(L_ERROR, NULL_OBJECT_REFERENCE))).unEx());
   }
