@@ -258,7 +258,7 @@ public class X86_64Muncher extends Muncher {
     // ############ more complicated ones ############
     
     // ############ statements ############
-    /*
+    
     sm.add(new MunchRule<IRStm, Void>(MOVE(MEM(PLUS(_l_, CONST(_i_))), _e_)) {
       @Override
       protected Void trigger(Muncher m, Matched c) {
@@ -266,7 +266,8 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
-    */
+    
+    
     // ############ expressions ############
     
     em.add(new MunchRule<IRExp, Temp>(PLUS(CONST(_i_), _r_)) {
@@ -443,7 +444,7 @@ public class X86_64Muncher extends Muncher {
   }
 
   private static Instr A_MOV_TO_MEM(int offset, Temp ptr, Temp src) {
-    return new A_OPER("movq    `s0, " + offset + "('d0)", list(ptr), list(src));
+    return new A_OPER("movq    `s1, " + offset + "(`s0)", noTemps, list(ptr, src));
   }
   
   private static Instr A_MOV_FROM_MEM(Temp d, Temp ptr) {
