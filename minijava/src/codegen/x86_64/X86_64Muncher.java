@@ -185,16 +185,6 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
-    em.add(new MunchRule<IRExp, Temp>(AND(_l_, _r_)) {
-      @Override
-      protected Temp trigger(Muncher m, Matched c) {
-        Temp res = new Temp();
-        m.emit(A_MOV(res, m.munch(c.get(_l_))));
-        m.emit(A_AND(res, m.munch(c.get(_r_))));
-        return res;
-      }
-    });
-    
     em.add(new MunchRule<IRExp, Temp>(PLUS(_l_, _r_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -288,6 +278,15 @@ public class X86_64Muncher extends Muncher {
     
     
     // ############ expressions ############
+    em.add(new MunchRule<IRExp, Temp>(AND(_l_, _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp res = new Temp();
+        m.emit(A_MOV(res, m.munch(c.get(_l_))));
+        m.emit(A_AND(res, m.munch(c.get(_r_))));
+        return res;
+      }
+    });
     
     em.add(new MunchRule<IRExp, Temp>(PLUS(CONST(_i_), _r_)) {
       @Override
