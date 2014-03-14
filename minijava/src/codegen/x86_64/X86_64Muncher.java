@@ -278,6 +278,7 @@ public class X86_64Muncher extends Muncher {
     
     
     // ############ expressions ############
+    
     em.add(new MunchRule<IRExp, Temp>(AND(_l_, _r_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -333,6 +334,15 @@ public class X86_64Muncher extends Muncher {
       protected Temp trigger(Muncher m, Matched c) {
         Temp temp = new Temp();
         m.emit(A_MOV_FROM_MEM(c.get(_i_), m.munch(c.get(_l_)), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(MEM(MINUS(_l_, CONST(_i_)))) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV_FROM_MEM(-1 * c.get(_i_), m.munch(c.get(_l_)), temp));
         return temp;
       }
     });
