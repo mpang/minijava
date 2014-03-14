@@ -413,10 +413,9 @@ public class X86_64Muncher extends Muncher {
   }
 
   private static Instr A_MOV(Temp t, int value) {
-    if (value == 0)
-      return new A_OPER("xorq    `d0, `d0", list(t), noTemps);
-    else
-      return new A_OPER("movq    $" + value + ", `d0", list(t), noTemps);
+    String instruction = value == 0 ? "xorq    `d0, `d0"
+                                    : "movq    $" + value + ", `d0";
+    return new A_OPER(instruction, list(t), noTemps);
   }
 
   private static Instr A_MOV(Temp d, Temp s) {
