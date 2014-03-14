@@ -145,6 +145,7 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
+    
     sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, _l_, _r_, _thn_, _els_)) {
       @Override
       protected Void trigger(Muncher m, Matched c) {
@@ -267,6 +268,24 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
+    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, MEM(_l_), _r_, _thn_, _els_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_CMP_FROM_MEM(m.munch(c.get(_l_)), m.munch(c.get(_r_))));
+        m.emit(A_CJUMP(c.get(_relOp_), c.get(_thn_), c.get(_els_)));
+        return null;
+      }
+    });
+    
+    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, MEM(PLUS(CONST(_i_), _e_)), _r_, _thn_, _els_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_CMP_FROM_MEM(c.get(_i_), m.munch(c.get(_e_)), m.munch(c.get(_r_))));
+        m.emit(A_CJUMP(c.get(_relOp_), c.get(_thn_), c.get(_els_)));
+        return null;
+      }
+    });
+    
     
     // ############ expressions ############
     
@@ -336,7 +355,7 @@ public class X86_64Muncher extends Muncher {
   }
   
   private static Instr A_AND(Temp dst, Temp src) {
-    return new A_OPER("andq    `s0, `d0", list(dst), list(src, dst));
+    return new A_OPER("andq    `s0, `d0", list(dst), list(src));
   }
   
   private static Instr A_CALL(Label fun, int nargs) {
@@ -391,6 +410,14 @@ public class X86_64Muncher extends Muncher {
     return new A_OPER("cmpq    `s1, `s0", noTemps, list(l, r));
   }
 
+  private static Instr A_CMP_FROM_MEM(Temp ptr, Temp dst) {
+    return new A_OPER("cmpq    (`s1), `s0", noTemps, list(dst, ptr));
+  }
+  
+  private static Instr A_CMP_FROM_MEM(int offset, Temp ptr, Temp dst) {
+    return new A_OPER("cmpq    " + offset + "(`s1), `s0", noTemps, list(dst, ptr));
+  }
+  
   private static Instr A_IMUL(Temp dst, Temp src) {
     return new A_OPER("imulq   `s0, `d0", list(dst), list(src, dst));
   }
@@ -421,7 +448,7 @@ public class X86_64Muncher extends Muncher {
   private static Instr A_MOV(Temp d, Temp s) {
     return new A_MOVE("movq    `s0, `d0", d, s);
   }
-
+  
   private static Instr A_CMOV(RelOp relOp, Temp d, Temp s) {
     String opCode;
     switch (relOp) {
@@ -435,7 +462,7 @@ public class X86_64Muncher extends Muncher {
         opCode = "cmovge";
         break;
       case LT:
-        opCode = "cmovl ";
+        opCode = "cmovl";
         break;
       case LE:
         opCode = "cmovle";
