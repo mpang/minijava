@@ -280,6 +280,26 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
+    em.add(new MunchRule<IRExp, Temp>(MINUS(CONST(_i_), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched match) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(match.get(_r_))));
+        m.emit(A_SUB(match.get(_i_), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(MUL(CONST(_i_), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched match) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(match.get(_r_))));
+        m.emit(A_IMUL(match.get(_i_), temp));
+        return temp;
+      }
+    });
+    
     em.add(new MunchRule<IRExp, Temp>(PLUS(MEM(PLUS(_l_, CONST(_i_))), _r_)) {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
@@ -374,6 +394,10 @@ public class X86_64Muncher extends Muncher {
   private static Instr A_IMUL(Temp dst, Temp src) {
     return new A_OPER("imulq   `s0, `d0", list(dst), list(src, dst));
   }
+  
+  private static Instr A_IMUL(int c, Temp dst) {
+    return new A_OPER("imulq    $" + c + ", `d0", list(dst), noTemps);
+  }
 
   private static Instr A_IDIV(Temp dst, Temp src) {
     return new A_OPER("movq    `d0, %rax\n" + "   cqto\n" + "   idivq   `s0\n"
@@ -459,6 +483,10 @@ public class X86_64Muncher extends Muncher {
     return new A_OPER("subq    `s0, `d0", list(dst), list(src, dst));
   }
 
+  private static Instr A_SUB(int c, Temp dst) {
+    return new A_OPER("subq    $" + c + ", `d0", list(dst), noTemps);
+  }
+  
   public static void dumpRules() {
     System.out.println("StmMunchers: " + sm);
     System.out.println("ExpMunchers: " + em);
