@@ -79,7 +79,7 @@ public class X86_64Muncher extends Muncher {
     final Pat<Integer> _scale_ = new Wildcard<Integer>() {
       @Override
       public void match(Integer toMatch, Matched matched) throws Failed {
-        int value = (Integer) toMatch;
+        int value = toMatch;
         if (value == 1 || value == 2 || value == 4 || value == 8)
           super.match(toMatch, matched);
         else
