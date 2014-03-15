@@ -111,6 +111,7 @@ public class X86_64Muncher extends Muncher {
         throw new Error("Not implemented");
       }
     });
+    
     sm.add(new MunchRule<IRStm, Void>(EXP(_e_)) {
       @Override
       protected Void trigger(Muncher m, Matched children) {
@@ -249,6 +250,15 @@ public class X86_64Muncher extends Muncher {
     // ############ more complicated ones ############
     
     // ############ statements ############
+    
+    sm.add(new MunchRule<IRStm, Void>(MOVE(TEMP(_t_), CONST(_i_))) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_MOV(c.get(_t_), c.get(_i_)));
+        return null;
+      }
+    });
+
     
     sm.add(new MunchRule<IRStm, Void>(MOVE(MEM(PLUS(_l_, CONST(_i_))), _e_)) {
       @Override
