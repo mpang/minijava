@@ -266,10 +266,10 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
-    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, MEM(_l_), _r_, _thn_, _els_)) {
+    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, _l_, CONST(_i_), _thn_, _els_)) {
       @Override
       protected Void trigger(Muncher m, Matched c) {
-        m.emit(A_CMP_FROM_MEM(m.munch(c.get(_l_)), m.munch(c.get(_r_))));
+        m.emit(A_CMP(m.munch(c.get(_l_)), c.get(_i_)));
         m.emit(A_CJUMP(c.get(_relOp_), c.get(_thn_), c.get(_els_)));
         return null;
       }
@@ -435,6 +435,10 @@ public class X86_64Muncher extends Muncher {
 
   private static Instr A_CMP(Temp l, Temp r) {
     return new A_OPER("cmpq    `s1, `s0", noTemps, list(l, r));
+  }
+  
+  private static Instr A_CMP(Temp l, int r) {
+    return new A_OPER("cmpq    $" + r + ", `s0", noTemps, list(l));
   }
 
   private static Instr A_CMP_FROM_MEM(Temp ptr, Temp dst) {
