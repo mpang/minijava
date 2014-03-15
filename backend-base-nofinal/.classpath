@@ -5,6 +5,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ir"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/x86_64sim"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/functions"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/minijava"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
