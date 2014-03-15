@@ -317,6 +317,16 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
+    em.add(new MunchRule<IRExp, Temp>(MINUS(CONST(_i_), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched match) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, match.get(_i_)));
+        m.emit(A_SUB(temp, m.munch(match.get(_r_))));
+        return temp;
+      }
+    });
+    
     em.add(new MunchRule<IRExp, Temp>(MUL(CONST(_i_), _r_)) {
       @Override
       protected Temp trigger(Muncher m, Matched match) {
