@@ -71,4 +71,7 @@ public abstract class Word {
 		throw new Error("arshift -- only supported on Int");
 	}
 
+	public Word and(Word r) {
+	  throw new Error("and - only supported on Int");
+	}
 }

@@ -1,10 +1,10 @@
 package ir.tree;
 
-import util.IndentingWriter;
-import util.List;
 import ir.interp.Word;
 import ir.interp.X86_64SimFrame;
 import ir.visitor.Visitor;
+import util.IndentingWriter;
+import util.List;
 
 public class BINOP extends IRExp {
 
@@ -70,6 +70,8 @@ public class BINOP extends IRExp {
 		case ARSHIFT:
 			return l.arshift(r);
 			//TODO: implement the other binops if you want to use them!
+		case AND:
+		  return l.and(r);
 		default:
 			throw new Error("Binop case missing? "+binop);
 		}

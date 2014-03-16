@@ -54,6 +54,11 @@ public class Int extends Word {
 	}
 	
 	@Override
+	public Word and(Word r) {
+	  return new Int(value & r.asInt());
+	}
+	
+	@Override
 	public int asInt() {
 		return value;
 	}

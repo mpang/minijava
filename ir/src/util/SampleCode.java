@@ -56,4 +56,7 @@ public class SampleCode {
 		return sampleFiles("ss");
 	}
 
+	public static File[] sampleJavaFiles() {
+	  return sampleFiles("java");
+	}
 }
