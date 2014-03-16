@@ -16,13 +16,7 @@ public class Assembly extends DefaultIndentable implements Iterable<AssemFragmen
 	private List<AssemFragment> fragments = List.empty();
 	
 	@Override
-	public void dump(IndentingWriter out) {
-		out.indent();
-//		if (sourceFile!=null)
-//			out.println(".file "+sourceFile);
-		out.println(".text");
-		out.outdent();
-		
+	public void dump(IndentingWriter out) {		
 		for (AssemFragment f : fragments) {
 			out.println(f);
 		}

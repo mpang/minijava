@@ -1,5 +1,6 @@
 package codegen.x86_64;
 
+import static analysis.implementation.SpillColor.spilledTEMP;
 import static codegen.patterns.IRPat.CALL;
 import static codegen.patterns.IRPat.CJUMP;
 import static codegen.patterns.IRPat.CMOVE;
@@ -40,6 +41,7 @@ import codegen.muncher.MuncherRules;
 import codegen.patterns.Matched;
 import codegen.patterns.Pat;
 import codegen.patterns.Wildcard;
+import analysis.implementation.SpillColor;
 
 /**
  * This Muncher implements the munching rules for a subset
@@ -59,9 +61,10 @@ public class X86_64Muncher extends Muncher {
 
 	private static MuncherRules<IRStm, Void> sm = new MuncherRules<IRStm, Void>();
 	private static MuncherRules<IRExp, Temp> em = new MuncherRules<IRExp, Temp>();
-
+	private static MuncherRules<IRExp, Void> dm = new MuncherRules<IRExp, Void>();
+	
 	public X86_64Muncher(Frame frame) {
-		super(frame, sm, em);
+		super(frame, sm, em, dm);
 	}
 
 	public X86_64Muncher(Frame frame, boolean beVerbose) {
@@ -87,6 +90,7 @@ public class X86_64Muncher extends Muncher {
 		final Pat<RelOp>     _relOp_ = Pat.any();
 
 		final Pat<Temp>          _t_ = Pat.any();
+		final Pat<SpillColor>    _sc_ = Pat.any();
 
 		final Pat<Integer>       _i_ = Pat.any();
 
@@ -106,6 +110,21 @@ public class X86_64Muncher extends Muncher {
 		};
 
 		// A basic set of small tiles.
+
+		dm.add(new MunchRule<IRExp, Void>( CONST(_i_) ) {
+			@Override
+			protected Void trigger(Muncher m, Matched c) {
+				m.emit(A_QUAD(c.get(_i_)));
+				return null;
+			}
+		});
+		dm.add(new MunchRule<IRExp, Void>( NAME(_lab_) ) {
+			@Override
+			protected Void trigger(Muncher m, Matched c) {
+				m.emit(A_QUAD(c.get(_lab_)));
+				return null;
+			}
+		});
 
 		sm.add(new MunchRule<IRStm, Void>( LABEL(_lab_) ) {
 			@Override
@@ -136,7 +155,7 @@ public class X86_64Muncher extends Muncher {
 						m.munch(c.get(_e_)) ));
 				return null;
 			}
-		});	
+		});
 		sm.add(new MunchRule<IRStm, Void>( MOVE(MEM(_l_), _r_) ) {
 			@Override
 			protected Void trigger(Muncher m, Matched c) {
@@ -217,6 +236,14 @@ public class X86_64Muncher extends Muncher {
 				return c.get(_t_);
 			}
 		});						
+		em.add(new MunchRule<IRExp, Temp>( NAME(_lab_) ) {
+			@Override
+			protected Temp trigger(Muncher m, Matched c) {
+				Temp t = new Temp();
+				m.emit( A_MOV(t, c.get(_lab_)) );
+				return t;
+			}
+		});
 		em.add(new MunchRule<IRExp, Temp>( MEM(_e_) ) {
 			@Override
 			protected Temp trigger(Muncher m, Matched c) {
@@ -240,10 +267,34 @@ public class X86_64Muncher extends Muncher {
 			}
 
 		});
+
+		//////// For matching spilled Temps /////
+
+		em.add(new MunchRule<IRExp, Temp>(spilledTEMP(_sc_)) {
+			@Override
+			protected Temp trigger(Muncher m, Matched c) {
+				SpillColor color = c.get(_sc_);
+				return m.munch(color.getLocation());
+			}
+		});
+
+		sm.add(new MunchRule<IRStm, Void>(MOVE(spilledTEMP(_sc_), _e_)) {
+			@Override
+			protected Void trigger(Muncher m, Matched c) {
+				m.munch(IR.MOVE(c.get(_sc_).getLocation(), c.get(_e_)));
+				return null;
+			}
+		});
 	}
 
 	///////// Helper methods to generate X86 assembly instructions //////////////////////////////////////
 
+	private static Instr A_QUAD(int i) {
+		return new A_OPER(".quad    " + i, noTemps, noTemps);
+  	}
+	private static Instr A_QUAD(Label l) {
+		return new A_OPER(".quad    " + l, noTemps, noTemps);
+  	}
 	private static Instr A_ADD(Temp dst, Temp src) {
 		return new A_OPER("addq    `s0, `d0", 
 				list(dst),
@@ -365,6 +416,9 @@ public class X86_64Muncher extends Muncher {
 		}
 
 		return new A_OPER(opCode + "    `s0, `d0", list(d), list(s, d));
+	}
+	private static Instr A_MOV(Temp d, Label l) {
+		return new A_OPER("leaq    " + l + "(%rip), `d0", list(d), noTemps);
 	}
 	private static Instr A_MOV_TO_MEM(Temp ptr, Temp s) {
 		return new A_OPER("movq    `s1, (`s0)", noTemps, list(ptr, s));

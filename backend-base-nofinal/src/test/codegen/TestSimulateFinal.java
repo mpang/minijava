@@ -18,6 +18,9 @@ import x86_64sim.State;
 import codegen.Assembly;
 import codegen.CodeGenerator;
 
+import analysis.RegAlloc;
+
+
 /**
  * So what we will do is simply to compile again all the TestTranslate programs into
  * IR code, then convert these into assem instructions, and then simulate them.
@@ -75,6 +78,7 @@ public class TestSimulateFinal extends TestTranslate {
 	protected String test(Fragments ir_fragments) {
 		CodeGenerator cogen = new CodeGenerator();
 		Assembly assembly = cogen.apply(ir_fragments);
+		RegAlloc.doit(assembly);
 		String program = assembly.toString();
 		State state = null;
 		String result;

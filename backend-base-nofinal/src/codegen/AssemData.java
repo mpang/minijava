@@ -1,63 +1,50 @@
 package codegen;
 
-import translate.ProcFragment;
-import util.IndentingWriter;
-import util.List;
-import static util.List.list;
 import static util.List.cons;
-import util.Utils;
+import static util.List.list;
 import ir.frame.Frame;
 import ir.frame.x86_64.X86_64Frame;
 import ir.temp.Label;
 import ir.temp.Temp;
+import ir.tree.IR;
+import ir.tree.IRExp;
+import ir.tree.IRData;
 import ir.tree.IRStm;
+import junit.framework.Assert;
 import codegen.assem.A_LABEL;
 import codegen.assem.A_OPER;
 import codegen.assem.Instr;
 import codegen.muncher.Muncher;
 import codegen.x86_64.X86_64Muncher;
-import junit.framework.Assert;
+import translate.DataFragment;
+import translate.ProcFragment;
+import util.IndentingWriter;
+import util.List;
+import util.Utils;
 
-/**
- * A class that represents the assembly code for a procedure. Since this is
- * specific to target architecture, this class may need subclasses
- * for different target architectures.
- * <p>
- * This implementation provided prints out procedure sequence that will work
- * for GAS (the GNU assembler). This should be portable for different target
- * architectures (since GAS is).
- * 
- * @author kdvolder
- */
-public class AssemProc extends AssemFragment {
+public class AssemData extends AssemFragment {
 
-	private Frame frame;
-	private ProcFragment procIR;
+	private DataFragment dataIR;
 	private List<Instr> asmBody;
+	private boolean optimize = false;
 
-	public AssemProc(ProcFragment procIR) {
-		this.frame = procIR.getFrame();
-		this.procIR = procIR;
+	public void setOptimize(boolean optimize) {
+		this.optimize = optimize;		
+	}
+	public AssemData(DataFragment dataIR) {
+		this.dataIR = dataIR;
 		rewrite(); // Actually not "re" writing, but writing for the first time :-)
 	}
 
 	@Override
 	public void dump(IndentingWriter out) {
- 		out.println(".text");
- 		out.println(".globl "+getLabel());
-		if (!Utils.macOS()) 
-			out.println("     .type "+getLabel()+", @function");
+		out.println(".data");
 
-		out.println(getLabel()+":");
 		out.indent();
 
-		frame.entrySequence(out);
 		for (Instr instr : getBody()) {
 			out.println(instr);
 		}
-		frame.exitSequence(out);
-		if (!Utils.macOS())
-			out.println(".size "+getLabel()+", .-"+getLabel());
 
 		out.outdent();
 	}
@@ -76,15 +63,11 @@ public class AssemProc extends AssemFragment {
 	}
 
 	public Label getLabel() {
-		return frame.getLabel();
+		return dataIR.getBody().getLabel();
 	}
 
 	public List<Instr> getBody() {
 		return asmBody;
-	}
-
-	public Frame getFrame() {
-		return frame;
 	}
 
 	/**
@@ -100,23 +83,17 @@ public class AssemProc extends AssemFragment {
 	 *  MEM nodes but also spilled Temp nodes.
 	 */
 
-	public List<Instr> procEntryExit2(List<Instr> asmBody) {
-		List<Temp> returnSink = cons(X86_64Frame.RV, X86_64Frame.special.append(X86_64Frame.calleeSave)); 
-		asmBody.add(new A_OPER("# return sink", list(new Temp[0]), returnSink));
-		return asmBody;
-	}
-
 	public Muncher newMuncher() {
-		return new X86_64Muncher(frame, false );
+		return new X86_64Muncher(null);
 	}
 
 	public void rewrite() {
-		List<IRStm> body = procIR.getTraceScheduledBody();
+		IRData body = dataIR.getBody();
 		Muncher m = newMuncher();
-		for (IRStm stm : body) {
-			m.munch(stm);
+		m.munch(IR.LABEL(body.getLabel()));
+		for (IRExp e : body) {
+			m.munchData(e);
 		}
-		this.asmBody = procEntryExit2(m.getInstructions());
+		asmBody = m.getInstructions();
 	}
-
 }

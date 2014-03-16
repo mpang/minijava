@@ -15,6 +15,9 @@ import codegen.AssemProc;
 import codegen.Assembly;
 import codegen.CodeGenerator;
 
+import analysis.RegAlloc;
+
+
 /**
  * The compiler...
  * 
@@ -52,6 +55,7 @@ public class Compiler {
 
 	private void compileIR(File assemOut, Fragments irCode) throws IOException {
 		Assembly assembly = codegenerator.apply(irCode);
+		RegAlloc.doit(assembly);
 		IndentingWriter out = new IndentingWriter(assemOut);
 		try {
 			assembly.dump(out);

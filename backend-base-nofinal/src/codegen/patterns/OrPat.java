@@ -25,7 +25,7 @@ public class OrPat<N> extends Pat<N> {
 		//The way we currently use these patterns, the match operation will not
 		//be called unless a pattern has a fixed size.
 		//It may be useful in the future to implement this method however.
-		//Note: but this will be tricky to implement withoiut changing the
+		//Note: but this will be tricky to implement without changing the
 		//  signature of the match method (will need to be able to undo
 		//  effects of matching one "or branch" before proceeding to the next one.
 		throw new UnsupportedOperationException();

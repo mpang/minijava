@@ -1,5 +1,6 @@
 package codegen;
 
+import translate.DataFragment;
 import translate.Fragment;
 import translate.Fragments;
 import translate.ProcFragment;
@@ -26,8 +27,9 @@ public class CodeGenerator {
 		for (Fragment fragment : ir_fragments) {
 			if (fragment instanceof ProcFragment) {
 				assembly.add(apply((ProcFragment)fragment));
-			}
-			else
+			} else if (fragment instanceof DataFragment) {
+				assembly.add(apply((DataFragment)fragment));
+			} else
 				throw new Error("Code generator doesn't know about fragments of this type");
 		}
 		return assembly;
@@ -36,5 +38,7 @@ public class CodeGenerator {
 	private AssemFragment apply(ProcFragment fragment) {
 		return new AssemProc(fragment);
 	}
-
+	private AssemFragment apply(DataFragment fragment) {
+		return new AssemData(fragment);
+	}
 }
