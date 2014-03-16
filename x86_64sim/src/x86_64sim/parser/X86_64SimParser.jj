@@ -48,6 +48,7 @@ TOKEN : /* KEYWORDS */
 | 	< MUL:		"imulq" >
 |   < DIV:		"idivq" >
 | 	< XOR:		"xorq" >
+| 	< AND:      "andq" >
 | 	< CQTO:		"cqto" >
 | 	< MOV:		"movq" >
 | 	< CMOVL:	"cmovl" >
@@ -146,7 +147,7 @@ void Instruction(Program p) : {
   	{ p.add(new AddI2R(source, target)); }
 | 	< ADD > source = Register() < COMMA > target = Register()
 	{ p.add(new AddR2R(source, target)); }
-|  	< CALL > target = Identifier()
+| 	< ADD > offset = Integer() < LPAREN > source = Register() < RPAREN > <COMMA > target = Register()	{ p.add(new AddIM2R(offset, source, target)); }|  	< CALL > target = Identifier()
   	{ p.add(new Call(target)); }
 |  	< CALL > < STAR > target = Register()
   	{ p.add(new Call("*", target)); }
@@ -241,7 +242,8 @@ void Instruction(Program p) : {
 	{ p.add(new SubR2R(source, target)); }
 | 	< XOR > source = Register() < COMMA > target = Register()
 	{ p.add(new XorR2R(source, target)); }
-}
+| 	< AND > source = Register() < COMMA > target = Register()
+    { p.add(new AndR2R(source, target));}}
 
 String IntLit () :
 {
