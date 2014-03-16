@@ -134,7 +134,7 @@ public class X86_64Muncher extends Muncher {
       protected Void trigger(Muncher m, Matched c) {
         Temp d = m.munch(c.get(_l_));
         Temp s = m.munch(c.get(_r_));
-        m.emit(A_MOV_TO_MEM(d, s));
+        m.emit(A_MOV_TO_MEM(0, d, s));
         return null;
       }
     });
@@ -227,7 +227,7 @@ public class X86_64Muncher extends Muncher {
       @Override
       protected Temp trigger(Muncher m, Matched c) {
         Temp r = new Temp();
-        m.emit(A_MOV_FROM_MEM(r, m.munch(c.get(_e_))));
+        m.emit(A_MOV_FROM_MEM(0, m.munch(c.get(_e_)), r));
         return r;
       }
     });
@@ -555,16 +555,8 @@ public class X86_64Muncher extends Muncher {
     return new A_OPER(opCode + "    `s0, `d0", list(d), list(s, d));
   }
 
-  private static Instr A_MOV_TO_MEM(Temp ptr, Temp s) {
-    return new A_OPER("movq    `s1, (`s0)", noTemps, list(ptr, s));
-  }
-
   private static Instr A_MOV_TO_MEM(int offset, Temp ptr, Temp src) {
     return new A_OPER("movq    `s1, " + offset + "(`s0)", noTemps, list(ptr, src));
-  }
-  
-  private static Instr A_MOV_FROM_MEM(Temp d, Temp ptr) {
-    return new A_OPER("movq    (`s0), `d0", list(d), list(ptr));
   }
   
   private static Instr A_MOV_FROM_MEM(int offset, Temp ptr, Temp dst) {
