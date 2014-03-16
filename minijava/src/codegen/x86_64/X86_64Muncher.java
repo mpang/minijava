@@ -336,6 +336,26 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
+    em.add(new MunchRule<IRExp, Temp>(PLUS(MEM(PLUS(_l_, CONST(_i_))), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(c.get(_r_))));
+        m.emit(A_ADD(c.get(_i_), m.munch(c.get(_l_)), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(PLUS(MEM(_e_), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(c.get(_r_))));
+        m.emit(A_ADD(0, m.munch(c.get(_e_)), temp));
+        return temp;
+      }
+    });
+    
     em.add(new MunchRule<IRExp, Temp>(MINUS(_l_, CONST(_i_))) {
       @Override
       protected Temp trigger(Muncher m, Matched match) {
@@ -362,16 +382,6 @@ public class X86_64Muncher extends Muncher {
         Temp temp = new Temp();
         m.emit(A_MOV(temp, m.munch(match.get(_r_))));
         m.emit(A_IMUL(match.get(_i_), temp));
-        return temp;
-      }
-    });
-    
-    em.add(new MunchRule<IRExp, Temp>(PLUS(MEM(PLUS(_l_, CONST(_i_))), _r_)) {
-      @Override
-      protected Temp trigger(Muncher m, Matched c) {
-        Temp temp = new Temp();
-        m.emit(A_MOV(temp, m.munch(c.get(_r_))));
-        m.emit(A_ADD(c.get(_i_), m.munch(c.get(_l_)), temp));
         return temp;
       }
     });
