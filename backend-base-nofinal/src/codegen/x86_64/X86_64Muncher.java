@@ -435,10 +435,12 @@ public class X86_64Muncher extends Muncher {
 
 	private static Instr A_QUAD(int i) {
 		return new A_OPER(".quad    " + i, noTemps, noTemps);
-  	}
+  }
+	
 	private static Instr A_QUAD(Label l) {
 		return new A_OPER(".quad    " + l, noTemps, noTemps);
-  	}
+  }
+	
   private static Instr A_ADD(Temp dst, Temp src) {
     return new A_OPER("addq    `s0, `d0", list(dst), list(src, dst));
   }
