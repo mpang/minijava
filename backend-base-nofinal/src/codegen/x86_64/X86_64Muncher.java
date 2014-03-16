@@ -1,20 +1,7 @@
 package codegen.x86_64;
 
 import static analysis.implementation.SpillColor.spilledTEMP;
-import static codegen.patterns.IRPat.CALL;
-import static codegen.patterns.IRPat.CJUMP;
-import static codegen.patterns.IRPat.CMOVE;
-import static codegen.patterns.IRPat.CONST;
-import static codegen.patterns.IRPat.EXP;
-import static codegen.patterns.IRPat.JUMP;
-import static codegen.patterns.IRPat.LABEL;
-import static codegen.patterns.IRPat.MEM;
-import static codegen.patterns.IRPat.MINUS;
-import static codegen.patterns.IRPat.MOVE;
-import static codegen.patterns.IRPat.MUL;
-import static codegen.patterns.IRPat.NAME;
-import static codegen.patterns.IRPat.PLUS;
-import static codegen.patterns.IRPat.TEMP;
+import static codegen.patterns.IRPat.*;
 import static ir.frame.x86_64.X86_64Frame.RAX;
 import static ir.frame.x86_64.X86_64Frame.RDX;
 import static ir.frame.x86_64.X86_64Frame.RV;
@@ -22,15 +9,16 @@ import static ir.frame.x86_64.X86_64Frame.arguments;
 import static ir.frame.x86_64.X86_64Frame.callerSave;
 import static ir.frame.x86_64.X86_64Frame.special;
 import static util.List.list;
-import util.IndentingWriter;
-import util.List;
 import ir.frame.Frame;
 import ir.temp.Label;
 import ir.temp.Temp;
+import ir.tree.CJUMP.RelOp;
 import ir.tree.IR;
 import ir.tree.IRExp;
 import ir.tree.IRStm;
-import ir.tree.CJUMP.RelOp;
+import util.IndentingWriter;
+import util.List;
+import analysis.implementation.SpillColor;
 import codegen.assem.A_LABEL;
 import codegen.assem.A_MOVE;
 import codegen.assem.A_OPER;
@@ -41,7 +29,6 @@ import codegen.muncher.MuncherRules;
 import codegen.patterns.Matched;
 import codegen.patterns.Pat;
 import codegen.patterns.Wildcard;
-import analysis.implementation.SpillColor;
 
 /**
  * This Muncher implements the munching rules for a subset
@@ -161,7 +148,7 @@ public class X86_64Muncher extends Muncher {
 			protected Void trigger(Muncher m, Matched c) {
 				Temp d = m.munch(c.get(_l_));
 				Temp s = m.munch(c.get(_r_));
-				m.emit(A_MOV_TO_MEM(d, s));
+				m.emit(A_MOV_TO_MEM(0, d, s));
 				return null;
 			}
 		});	
@@ -248,7 +235,7 @@ public class X86_64Muncher extends Muncher {
 			@Override
 			protected Temp trigger(Muncher m, Matched c) {
 				Temp r = new Temp();
-				m.emit(A_MOV_FROM_MEM(r, m.munch(c.get(_e_))));
+				m.emit(A_MOV_FROM_MEM(0, m.munch(c.get(_e_)), r));
 				return r;
 			}
 		});	
@@ -269,6 +256,8 @@ public class X86_64Muncher extends Muncher {
 		});
 
 		//////// For matching spilled Temps /////
+		
+	// ############ expressions ############
 
 		em.add(new MunchRule<IRExp, Temp>(spilledTEMP(_sc_)) {
 			@Override
@@ -285,6 +274,162 @@ public class X86_64Muncher extends Muncher {
 				return null;
 			}
 		});
+		
+		/////////// more complicated rules ///////////////////
+		
+		sm.add(new MunchRule<IRStm, Void>(MOVE(TEMP(_t_), CONST(_i_))) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_MOV(c.get(_t_), c.get(_i_)));
+        return null;
+      }
+    });
+
+    
+    sm.add(new MunchRule<IRStm, Void>(MOVE(MEM(PLUS(_l_, CONST(_i_))), _e_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_MOV_TO_MEM(c.get(_i_), m.munch(c.get(_l_)), m.munch(c.get(_e_))));
+        return null;
+      }
+    });
+    
+    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, _l_, CONST(_i_), _thn_, _els_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_CMP(m.munch(c.get(_l_)), c.get(_i_)));
+        m.emit(A_CJUMP(c.get(_relOp_), c.get(_thn_), c.get(_els_)));
+        return null;
+      }
+    });
+    
+    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, MEM(PLUS(CONST(_i_), _e_)), _r_, _thn_, _els_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_CMP_FROM_MEM(c.get(_i_), m.munch(c.get(_e_)), m.munch(c.get(_r_))));
+        m.emit(A_CJUMP(c.get(_relOp_), c.get(_thn_), c.get(_els_)));
+        return null;
+      }
+    });
+    
+    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, MEM(MINUS(_e_, CONST(_i_))), _r_, _thn_, _els_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_CMP_FROM_MEM(-1 * c.get(_i_), m.munch(c.get(_e_)), m.munch(c.get(_r_))));
+        m.emit(A_CJUMP(c.get(_relOp_), c.get(_thn_), c.get(_els_)));
+        return null;
+      }
+    });
+    
+    sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, MEM(MINUS(_r_, CONST(_i_))), TEMP(_t_), _e_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_CMP_FROM_MEM(-1 * c.get(_i_), m.munch(c.get(_r_)), m.munch(c.get(_l_))));
+        m.emit(A_CMOV(c.get(_relOp_), c.get(_t_), m.munch(c.get(_e_))));
+        return null;
+      }
+    });
+    
+    sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, MEM(PLUS(_r_, CONST(_i_))), TEMP(_t_), _e_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit(A_CMP_FROM_MEM(c.get(_i_), m.munch(c.get(_r_)), m.munch(c.get(_l_))));
+        m.emit(A_CMOV(c.get(_relOp_), c.get(_t_), m.munch(c.get(_e_))));
+        return null;
+      }
+    });
+    
+    
+    // ############ expressions ############
+    
+    em.add(new MunchRule<IRExp, Temp>(AND(_l_, _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp res = new Temp();
+        m.emit(A_MOV(res, m.munch(c.get(_l_))));
+        m.emit(A_AND(res, m.munch(c.get(_r_))));
+        return res;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(PLUS(CONST(_i_), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(c.get(_r_))));
+        m.emit(A_ADD(c.get(_i_), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(PLUS(MEM(PLUS(_l_, CONST(_i_))), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(c.get(_r_))));
+        m.emit(A_ADD(c.get(_i_), m.munch(c.get(_l_)), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(PLUS(MEM(_e_), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(c.get(_r_))));
+        m.emit(A_ADD(0, m.munch(c.get(_e_)), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(MINUS(_l_, CONST(_i_))) {
+      @Override
+      protected Temp trigger(Muncher m, Matched match) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(match.get(_l_))));
+        m.emit(A_SUB(match.get(_i_), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(MINUS(CONST(_i_), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched match) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, match.get(_i_)));
+        m.emit(A_SUB(temp, m.munch(match.get(_r_))));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(MUL(CONST(_i_), _r_)) {
+      @Override
+      protected Temp trigger(Muncher m, Matched match) {
+        Temp temp = new Temp();
+        m.emit(A_MOV(temp, m.munch(match.get(_r_))));
+        m.emit(A_IMUL(match.get(_i_), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(MEM(PLUS(_l_, CONST(_i_)))) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV_FROM_MEM(c.get(_i_), m.munch(c.get(_l_)), temp));
+        return temp;
+      }
+    });
+    
+    em.add(new MunchRule<IRExp, Temp>(MEM(MINUS(_l_, CONST(_i_)))) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Temp temp = new Temp();
+        m.emit(A_MOV_FROM_MEM(-1 * c.get(_i_), m.munch(c.get(_l_)), temp));
+        return temp;
+      }
+    });
+
 	}
 
 	///////// Helper methods to generate X86 assembly instructions //////////////////////////////////////
@@ -295,145 +440,175 @@ public class X86_64Muncher extends Muncher {
 	private static Instr A_QUAD(Label l) {
 		return new A_OPER(".quad    " + l, noTemps, noTemps);
   	}
-	private static Instr A_ADD(Temp dst, Temp src) {
-		return new A_OPER("addq    `s0, `d0", 
-				list(dst),
-				list(src,dst));
-	}
-	private static Instr A_CALL(Label fun, int nargs) {
-		List<Temp> args = List.empty();
-		for (int i = 0; i < Math.min(arguments.size(), nargs); ++i) {
-			args.add(arguments.get(i));
-		}
-		return new A_OPER("call    "+fun, callerSave.append(arguments), special.append(args)); 
-	}
-	private static Instr A_CJUMP(RelOp relOp, Label thn, Label els) {
-		String opCode;
-		switch (relOp) {
-		case EQ:
-			opCode = "je ";
-			break;
-		case NE:
-			opCode = "jne";
-			break;
-		case GE:
-			opCode = "jge";
-			break;
-		case LT:
-			opCode = "jl ";
-			break;
-		case LE:
-			opCode = "jle";
-			break;
-		case GT:
-			opCode = "jg";
-			break;
-		case ULT:
-			opCode = "jb";
-			break;
-		case UGT:
-			opCode = "ja";
-			break;
-		case ULE:
-			opCode = "jbe";
-			break;
-		case UGE:
-			opCode = "jae";
-			break;
-		default:
-			throw new Error("Missing case?");
-		}
-		return new A_OPER(opCode+"     `j0", noTemps, noTemps, list(thn, els));
-	}
-	private static Instr A_CMP(Temp l, Temp r) {
-		return new A_OPER("cmpq    `s1, `s0", noTemps, list(l, r));
-	}
-	private static Instr A_IMUL(Temp dst, Temp src) {
-		return new A_OPER("imulq   `s0, `d0", 
-				list(dst),
-				list(src,dst));
-	}
-	private static Instr A_IDIV(Temp dst, Temp src) {
-		return new A_OPER("movq    `d0, %rax\n" +
-				"   cqto\n" +
-				"   idivq   `s0\n" +
-				"   movq    %rax, `d0", 
-				list(dst, RAX, RDX),
-				list(src,dst));
-	}
+  private static Instr A_ADD(Temp dst, Temp src) {
+    return new A_OPER("addq    `s0, `d0", list(dst), list(src, dst));
+  }
 
-	private static Instr A_JMP(Label target) {
-		return new A_OPER("jmp     `j0", noTemps, noTemps, List.list(target));
-	}
-	private static Instr A_LABEL(Label name) {
-		return new A_LABEL(name+":", name);
-	}
+  private static Instr A_ADD(int c, Temp dst) {
+    return new A_OPER("addq    $" + c + ", `d0", list(dst), noTemps);
+  }
+  
+  private static Instr A_ADD(int offset, Temp ptr, Temp dst) {
+    return new A_OPER("addq    " + offset + "(`s0), `d0", list(dst), list(ptr));
+  }
+  
+  private static Instr A_AND(Temp dst, Temp src) {
+    return new A_OPER("andq    `s0, `d0", list(dst), list(src));
+  }
+  
+  private static Instr A_CALL(Label fun, int nargs) {
+    List<Temp> args = List.empty();
+    for (int i = 0; i < Math.min(arguments.size(), nargs); ++i) {
+      args.add(arguments.get(i));
+    }
+    return new A_OPER("call    " + fun, callerSave.append(arguments),
+        special.append(args));
+  }
 
-	private static Instr A_MOV(Temp t, int value) {
-		if (value == 0) 
-			return new A_OPER("xorq    `d0, `d0", list(t), noTemps);
-		else
-			return new A_OPER("movq    $"+value+", `d0", list(t), noTemps);
-	}
-	private static Instr A_MOV(Temp d, Temp s) {
-		return new A_MOVE("movq    `s0, `d0", d, s);
-	}
-	private static Instr A_CMOV(RelOp relOp, Temp d, Temp s) {
-		String opCode;
-		switch (relOp) {
-		case EQ:
-			opCode = "cmove ";
-			break;
-		case NE:
-			opCode = "cmovne";
-			break;
-		case GE:
-			opCode = "cmovge";
-			break;
-		case LT:
-			opCode = "cmovl ";
-			break;
-		case LE:
-			opCode = "cmovle";
-			break;
-		case GT:
-			opCode = "cmovg";
-			break;
-		case ULT:
-			opCode = "cmovb";
-			break;
-		case UGT:
-			opCode = "cmova";
-			break;
-		case ULE:
-			opCode = "cmovbe";
-			break;
-		case UGE:
-			opCode = "cmovae";
-			break;
-		default:
-			throw new Error("Missing case?");
-		}
+  private static Instr A_CJUMP(RelOp relOp, Label thn, Label els) {
+    String opCode;
+    switch (relOp) {
+      case EQ:
+        opCode = "je ";
+        break;
+      case NE:
+        opCode = "jne";
+        break;
+      case GE:
+        opCode = "jge";
+        break;
+      case LT:
+        opCode = "jl ";
+        break;
+      case LE:
+        opCode = "jle";
+        break;
+      case GT:
+        opCode = "jg";
+        break;
+      case ULT:
+        opCode = "jb";
+        break;
+      case UGT:
+        opCode = "ja";
+        break;
+      case ULE:
+        opCode = "jbe";
+        break;
+      case UGE:
+        opCode = "jae";
+        break;
+      default:
+        throw new Error("Missing case?");
+    }
+    return new A_OPER(opCode + "     `j0", noTemps, noTemps, list(thn, els));
+  }
 
-		return new A_OPER(opCode + "    `s0, `d0", list(d), list(s, d));
-	}
-	private static Instr A_MOV(Temp d, Label l) {
-		return new A_OPER("leaq    " + l + "(%rip), `d0", list(d), noTemps);
-	}
-	private static Instr A_MOV_TO_MEM(Temp ptr, Temp s) {
-		return new A_OPER("movq    `s1, (`s0)", noTemps, list(ptr, s));
-	}
-	private static Instr A_MOV_FROM_MEM(Temp d, Temp ptr) {
-		return new A_OPER("movq    (`s0), `d0", list(d), list(ptr));
-	}
-	private static Instr A_SUB(Temp dst, Temp src) {
-		return new A_OPER("subq    `s0, `d0", 
-				list(dst),
-				list(src,dst));
-	}
+  private static Instr A_CMP(Temp l, Temp r) {
+    return new A_OPER("cmpq    `s1, `s0", noTemps, list(l, r));
+  }
+  
+  private static Instr A_CMP(Temp l, int r) {
+    return new A_OPER("cmpq    $" + r + ", `s0", noTemps, list(l));
+  }
 
-	public static void dumpRules() {
-		System.out.println("StmMunchers: "+sm);
-		System.out.println("ExpMunchers: "+em);
-	}
+  private static Instr A_CMP_FROM_MEM(int offset, Temp ptr, Temp dst) {
+    return new A_OPER("cmpq    " + offset + "(`s1), `s0", noTemps, list(dst, ptr));
+  }
+  
+  private static Instr A_IMUL(Temp dst, Temp src) {
+    return new A_OPER("imulq   `s0, `d0", list(dst), list(src, dst));
+  }
+  
+  private static Instr A_IMUL(int c, Temp dst) {
+    return new A_OPER("imulq    $" + c + ", `d0", list(dst), noTemps);
+  }
+
+  private static Instr A_IDIV(Temp dst, Temp src) {
+    return new A_OPER("movq    `d0, %rax\n" + "   cqto\n" + "   idivq   `s0\n"
+        + "   movq    %rax, `d0", list(dst, RAX, RDX), list(src, dst));
+  }
+
+  private static Instr A_JMP(Label target) {
+    return new A_OPER("jmp     `j0", noTemps, noTemps, List.list(target));
+  }
+
+  private static Instr A_LABEL(Label name) {
+    return new A_LABEL(name + ":", name);
+  }
+
+  private static Instr A_MOV(Temp t, int value) {
+    String instruction = value == 0 ? "xorq    `d0, `d0"
+                                    : "movq    $" + value + ", `d0";
+    return new A_OPER(instruction, list(t), noTemps);
+  }
+
+  private static Instr A_MOV(Temp d, Temp s) {
+    return new A_MOVE("movq    `s0, `d0", d, s);
+  }
+  
+  private static Instr A_MOV(Temp d, Label l) {
+    return new A_OPER("leaq    " + l + "(%rip), `d0", list(d), noTemps);
+  }
+  
+  private static Instr A_CMOV(RelOp relOp, Temp d, Temp s) {
+    String opCode;
+    switch (relOp) {
+      case EQ:
+        opCode = "cmove ";
+        break;
+      case NE:
+        opCode = "cmovne";
+        break;
+      case GE:
+        opCode = "cmovge";
+        break;
+      case LT:
+        opCode = "cmovl";
+        break;
+      case LE:
+        opCode = "cmovle";
+        break;
+      case GT:
+        opCode = "cmovg";
+        break;
+      case ULT:
+        opCode = "cmovb";
+        break;
+      case UGT:
+        opCode = "cmova";
+        break;
+      case ULE:
+        opCode = "cmovbe";
+        break;
+      case UGE:
+        opCode = "cmovae";
+        break;
+      default:
+        throw new Error("Missing case?");
+    }
+
+    return new A_OPER(opCode + "    `s0, `d0", list(d), list(s, d));
+  }
+
+  private static Instr A_MOV_TO_MEM(int offset, Temp ptr, Temp src) {
+    return new A_OPER("movq    `s1, " + offset + "(`s0)", noTemps, list(ptr, src));
+  }
+  
+  private static Instr A_MOV_FROM_MEM(int offset, Temp ptr, Temp dst) {
+    return new A_OPER("movq    " + offset + "(`s0), `d0", list(dst), list(ptr));
+  }
+
+  private static Instr A_SUB(Temp dst, Temp src) {
+    return new A_OPER("subq    `s0, `d0", list(dst), list(src, dst));
+  }
+
+  private static Instr A_SUB(int c, Temp dst) {
+    return new A_OPER("subq    $" + c + ", `d0", list(dst), noTemps);
+  }
+  
+  public static void dumpRules() {
+    System.out.println("StmMunchers: " + sm);
+    System.out.println("ExpMunchers: " + em);
+  }
 }
