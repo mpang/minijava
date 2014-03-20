@@ -17,10 +17,12 @@ import codegen.assem.A_MOVE;
 
 public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 
+  private FlowGraph<N> fg;
 	private LivenessImplementation<N> liveness;
 	private List<Move> moves = List.empty();
 
 	public InterferenceGraphImplementation(FlowGraph<N> fg) {
+	  this.fg = fg;
 		this.liveness = new LivenessImplementation<N>(fg);
 		
 		// create nodes first
