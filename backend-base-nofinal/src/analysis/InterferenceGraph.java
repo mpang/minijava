@@ -17,9 +17,9 @@ abstract public class InterferenceGraph extends Graph<Temp> {
 		
 		public Node<Temp> src;
 		public Node<Temp> dst;
-		public Move(Temp dst, Temp src) {
-			this.dst = nodeFor(dst);
-			this.src = nodeFor(src);
+		public Move(Node<Temp> dst, Node<Temp> src) {
+			this.dst = dst;
+			this.src = src;
 		}
 		
 		@Override

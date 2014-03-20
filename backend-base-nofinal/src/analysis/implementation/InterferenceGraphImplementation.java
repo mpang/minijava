@@ -37,7 +37,7 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		for (Node<N> node : fg.nodes()) {
 		  if (isMove(node)) {
 		    A_MOVE move = (A_MOVE) node.wrappee();
-		    moves.add(new Move(move.dst, move.src));
+		    moves.add(new Move(nodeFor(move.dst), nodeFor(move.src)));
 		    
 		    for (Temp liveOut : liveness.liveOut(node)) {
 		      if (!liveOut.equals(move.src) && !liveOut.equals(move.dst)) {
