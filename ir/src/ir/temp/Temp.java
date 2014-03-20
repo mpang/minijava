@@ -82,5 +82,10 @@ public class Temp implements Comparable<Temp> {
 	public boolean equals(Object arg) {
 	  return (arg instanceof Temp) && getName().equals(((Temp) arg).getName());
 	}
+	
+	@Override
+	public int hashCode() {
+	  return getName().hashCode();
+	}
 }
 
