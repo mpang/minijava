@@ -15,42 +15,42 @@ import analysis.util.graph.Node;
 
 public class LivenessImplementation<N> extends Liveness<N> {
 	
-  private Map<Node<N>, ActiveSet<Temp>> liveIn;
-  private Map<Node<N>, ActiveSet<Temp>> liveOut;
+  private Map<Node<N>, ActiveSet<Temp>> liveIns;
+  private Map<Node<N>, ActiveSet<Temp>> liveOuts;
   
 	public LivenessImplementation(FlowGraph<N> graph) {
 		super(graph);
 		
-		liveIn = new HashMap<Node<N>, ActiveSet<Temp>>();
-		liveOut = new HashMap<Node<N>, ActiveSet<Temp>>();
+		liveIns = new HashMap<Node<N>, ActiveSet<Temp>>();
+		liveOuts = new HashMap<Node<N>, ActiveSet<Temp>>();
 		
 		for (Node<N> node : graph.nodes()) {
-		  liveIn.put(node, new ActiveSet<Temp>());
-		  liveOut.put(node, new ActiveSet<Temp>());
+		  liveIns.put(node, new ActiveSet<Temp>());
+		  liveOuts.put(node, new ActiveSet<Temp>());
 		}
 		
 		for (Node<N> node : graph.nodes()) {
-		  ActiveSet<Temp> in = liveIn.get(node);
-		  ActiveSet<Temp> out = liveOut.get(node);
+		  ActiveSet<Temp> liveIn = liveIns.get(node);
+		  ActiveSet<Temp> liveOut = liveOuts.get(node);
 		  
 		  // in
-		  in.addAll(g.use(node));
-		  in.addAll(out.remove(g.def(node)));
+		  liveIn.addAll(g.use(node));
+		  liveIn.addAll(liveOut.remove(g.def(node)));
 		  
 		  // out
 		  for (Node<N> succ : node.succ()) {
-		    out.addAll(liveIn.get(succ));
+		    liveOut.addAll(liveIns.get(succ));
 		  }
 		}
 	}
 
 	@Override
 	public List<Temp> liveOut(Node<N> node) {
-	  return liveOut.get(node).getElements();
+	  return liveOuts.get(node).getElements();
 	}
 
 	private List<Temp> liveIn(Node<N> node) {
-	  return liveIn.get(node).getElements();
+	  return liveIns.get(node).getElements();
 	}
 
 	private String shortList(List<Temp> l) {
