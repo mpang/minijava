@@ -1,5 +1,8 @@
 package analysis.implementation;
 
+import ir.temp.Color;
+import ir.temp.Temp;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -7,34 +10,65 @@ import java.util.Set;
 
 import util.IndentingWriter;
 import util.List;
-import ir.temp.Color;
-import ir.temp.Temp;
 import analysis.FlowGraph;
 import analysis.InterferenceGraph;
-import analysis.InterferenceGraph.Move;
 import analysis.util.graph.Node;
-import junit.framework.Assert;
+import codegen.assem.A_MOVE;
 
 public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 
-	private FlowGraph<N> fg;
 	private LivenessImplementation<N> liveness;
 	private List<Move> moves = List.empty();
 
 	public InterferenceGraphImplementation(FlowGraph<N> fg) {
-		this.fg = fg;
 		this.liveness = new LivenessImplementation<N>(fg);
-		// This "dummy" implementation just adds nodes, but no edges
+		
+		// create nodes first
 		for (Node<N> node : fg.nodes()) {
 			for (Temp def : fg.def(node)) {
-				Node<Temp> n = nodeFor(def);
+				nodeFor(def);
 			}
+			
 			for (Temp use : fg.use(node)) {
-				Node<Temp> n = nodeFor(use);
+				nodeFor(use);
 			}
+		}
+		
+		for (Node<N> node : fg.nodes()) {
+		  if (isMove(node)) {
+		    A_MOVE move = (A_MOVE) node.wrappee();
+		    moves.add(new Move(move.dst, move.src));
+		    
+		    for (Temp liveOut : liveness.liveOut(node)) {
+		      if (!liveOut.equals(move.src) && !liveOut.equals(move.dst)) {
+		        addUndirectedEdge(liveOut, move.dst);
+		      }
+		    }
+		  }
+		  
+		  else {
+		    for (Temp def : fg.def(node)) {
+		      for (Temp liveOut : liveness.liveOut(node)) {
+		        if (!def.equals(liveOut)) {
+		          addUndirectedEdge(def, liveOut);	          
+		        }
+		      }
+		    }
+		  }
 		}
 	}
 
+	private boolean isMove(Node<N> node) {
+	  return node.wrappee() instanceof A_MOVE;
+	}
+	
+	private void addUndirectedEdge(Temp first, Temp second) {
+	  Node<Temp> firstNode = nodeFor(first);
+	  Node<Temp> secondNode = nodeFor(second);
+	  addEdge(firstNode, secondNode);
+	  addEdge(secondNode, firstNode);
+	}
+	
 	@Override
 	public List<Move> moves() {
 		return moves;

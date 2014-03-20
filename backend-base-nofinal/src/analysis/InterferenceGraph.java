@@ -7,7 +7,6 @@ import java.util.Map;
 import util.DefaultIndentable;
 import util.IndentingWriter;
 import util.List;
-
 import analysis.util.graph.Graph;
 import analysis.util.graph.Node;
 
@@ -18,9 +17,9 @@ abstract public class InterferenceGraph extends Graph<Temp> {
 		
 		public Node<Temp> src;
 		public Node<Temp> dst;
-		public Move(Node<Temp> dst, Node<Temp> src) {
-			this.dst = dst;
-			this.src = src;
+		public Move(Temp dst, Temp src) {
+			this.dst = nodeFor(dst);
+			this.src = nodeFor(src);
 		}
 		
 		@Override
