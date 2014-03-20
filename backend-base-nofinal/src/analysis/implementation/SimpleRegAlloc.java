@@ -4,24 +4,18 @@ import ir.frame.Frame;
 import ir.temp.Color;
 import ir.temp.Temp;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import junit.framework.Assert;
 import util.IndentingWriter;
 import util.List;
-
-import codegen.AssemProc;
-import codegen.assem.Instr;
-
 import analysis.FlowGraph;
 import analysis.InterferenceGraph;
 import analysis.RegAlloc;
 import analysis.util.graph.Node;
-
-import junit.framework.Assert;
+import codegen.AssemProc;
+import codegen.assem.Instr;
 
 public class SimpleRegAlloc extends RegAlloc {
 
@@ -30,14 +24,12 @@ public class SimpleRegAlloc extends RegAlloc {
 	private FlowGraph<Instr> fg;
 	private InterferenceGraph ig;
 	private Frame frame;
-	private static final boolean generateDotFiles = false;
 
 	private Map<Temp, Color> colorMap = new HashMap<Temp, Color>();
 	private List<Temp> registers;
 	private List<Color> colors;
 	private List<Color> spillColors = List.empty();
 	private int iteration;
-	static private int incarnation = 0;
 
 	/**
 	 * List of *actual* spills.
@@ -146,37 +138,37 @@ public class SimpleRegAlloc extends RegAlloc {
 	 * Returns a List of Temp's (a stack really) which suggest the order
 	 * in which nodes should be assigned colors.
 	 * 
-	 * This version just returns an arbitrary order.
 	 */
 	private List<Temp> simplify() {
 		List<Node<Temp>> toColor = List.empty();
 		List<Temp> ordering = List.empty();
-		int simplified = 0;
 
 		// Separate pre-colored nodes from other nodes.
-		for (Node<Temp> node : ig.nodes())
-			if (!isColored(node)) 
+		for (Node<Temp> node : ig.nodes()) {
+			if (!isColored(node)) {
 				toColor.add(node);
+			}
+		}
 		
 		while (!toColor.isEmpty()) {
-			Node<Temp> node = toColor.head();
+			Node<Temp> node = selectLowDegreeNode(toColor);
 			toColor = toColor.delete(node);
 			ordering = List.cons(node.wrappee(), ordering);
-			// this.ig.rmNode(node);
-			if (generateDotFiles) {
-				File out = new File("simplify-" + incarnation + "-" + simplified + ".dot");
-				try {
-					PrintStream outb = new PrintStream(out);
-					outb.print(ig.dotString(registers.size(), null));
-					outb.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			simplified++;
+			ig.rmNode(node);
 		}
-		incarnation++;
+		
 		return ordering;
+	}
+	
+	private Node<Temp> selectLowDegreeNode(List<Node<Temp>> nodes) {
+	  for (Node<Temp> node : nodes) {
+	    if (node.outDegree() < registers.size()) {
+	      return node;
+	    }
+	  }
+	  
+	  // pick a random node when can't find node with less significant degree
+	  return nodes.head();
 	}
 
 	private boolean isColored(Node<Temp> node) {
