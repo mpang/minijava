@@ -1,7 +1,5 @@
 package ir.temp;
 
-import ir.temp.Temp;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,6 +76,11 @@ public class Temp implements Comparable<Temp> {
 	@Override
 	public int compareTo(Temp arg0) {
 		return getName().compareTo(arg0.getName());
+	}
+	
+	@Override
+	public boolean equals(Object arg) {
+	  return (arg instanceof Temp) && getName().equals(((Temp) arg).getName());
 	}
 }
 
