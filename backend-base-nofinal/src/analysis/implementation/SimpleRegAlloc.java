@@ -94,18 +94,20 @@ public class SimpleRegAlloc extends RegAlloc {
 		// Try to color using a register
 		success = tryToColor(t, colors);
 
+		
 		if (!success) {
 			// Try to spill using an existing spill slot.
 			spilled.add(t);
 			success = tryToColor(t, spillColors);
 		}
-
+    
 		if (!success) {
 			//Create a new spill slot and use that.
 			SpillColor color = new SpillColor(frame);
 			spillColors.add(color);
 			setColor(t, color);
 		}
+		
 		color(toColor.tail());
 	}
 

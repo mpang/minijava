@@ -35,7 +35,8 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		}
 		
 		for (Node<N> node : fg.nodes()) {
-		  if (isMove(node)) {
+		  // move between temps
+		  if (isMoveBetweenTemp(node)) {
 		    A_MOVE move = (A_MOVE) node.wrappee();
 		    moves.add(new Move(nodeFor(move.dst), nodeFor(move.src)));
 		    
@@ -45,12 +46,12 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		      }
 		    }
 		  }
-		  
+		  // non-move instructions
 		  else {
 		    for (Temp def : fg.def(node)) {
 		      for (Temp liveOut : liveness.liveOut(node)) {
 		        if (!def.equals(liveOut)) {
-		          addUndirectedEdge(def, liveOut);	          
+		          addUndirectedEdge(def, liveOut);
 		        }
 		      }
 		    }
@@ -58,7 +59,7 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		}
 	}
 
-	private boolean isMove(Node<N> node) {
+	private boolean isMoveBetweenTemp(Node<N> node) {
 	  return node.wrappee() instanceof A_MOVE;
 	}
 	
