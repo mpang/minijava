@@ -4,9 +4,9 @@ import ir.temp.Temp;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 import util.List;
-
 import analysis.FlowGraph;
 import analysis.Liveness;
 import analysis.util.ActiveSet;
@@ -15,19 +15,42 @@ import analysis.util.graph.Node;
 
 public class LivenessImplementation<N> extends Liveness<N> {
 	
+  private Map<Node<N>, ActiveSet<Temp>> liveIn;
+  private Map<Node<N>, ActiveSet<Temp>> liveOut;
+  
 	public LivenessImplementation(FlowGraph<N> graph) {
 		super(graph);
+		
+		liveIn = new HashMap<Node<N>, ActiveSet<Temp>>();
+		liveOut = new HashMap<Node<N>, ActiveSet<Temp>>();
+		
+		for (Node<N> node : graph.nodes()) {
+		  liveIn.put(node, new ActiveSet<Temp>());
+		  liveOut.put(node, new ActiveSet<Temp>());
+		}
+		
+		for (Node<N> node : graph.nodes()) {
+		  ActiveSet<Temp> in = liveIn.get(node);
+		  ActiveSet<Temp> out = liveOut.get(node);
+		  
+		  // in
+		  in.addAll(g.use(node));
+		  in.addAll(out.remove(g.def(node)));
+		  
+		  // out
+		  for (Node<N> succ : node.succ()) {
+		    out.addAll(liveIn.get(succ));
+		  }
+		}
 	}
 
 	@Override
 	public List<Temp> liveOut(Node<N> node) {
-		// This dummy implementation says that nothing is live
-		return List.empty();
+	  return liveOut.get(node).getElements();
 	}
 
 	private List<Temp> liveIn(Node<N> node) {
-		// This dummy implementation says that nothing is live
-		return List.empty();
+	  return liveIn.get(node).getElements();
 	}
 
 	private String shortList(List<Temp> l) {
@@ -56,9 +79,11 @@ public class LivenessImplementation<N> extends Liveness<N> {
 	private double lineWidth() {
 		return (Math.max(3.0, Math.sqrt(g.nodes().size() + 1) * 1.4));
 	}
+	
 	private double arrowSize() {
 		return Math.max(2.0, Math.sqrt(Math.sqrt(g.nodes().size() + 1)));
 	}
+	
 	@Override
 	public String dotString(String name) {
 		StringBuffer out = new StringBuffer();
@@ -73,6 +98,7 @@ public class LivenessImplementation<N> extends Liveness<N> {
 			out.append(", style=\"setlinewidth(" + lineWidth() + ")\", color=" + (g.isMove(n) ? "green" : "blue"));
 			out.append("]\n");
 		}
+		
 		for (Node<N> n : g.nodes()) {
 			for (Node<N> o : n.succ()) {
 				out.append("  \"" + dotLabel(n) + "\" -> \"" + dotLabel(o) + "\" [arrowhead = normal, arrowsize=" + arrowSize() + ", style=\"setlinewidth(" + lineWidth() + ")\"];\n");
