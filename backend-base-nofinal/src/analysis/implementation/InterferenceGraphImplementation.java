@@ -5,6 +5,7 @@ import ir.temp.Temp;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,7 +19,7 @@ import codegen.assem.A_MOVE;
 public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 
 	private LivenessImplementation<N> liveness;
-	private List<Move> moves = List.empty();
+	private List<Move> moves;
 
 	public InterferenceGraphImplementation(FlowGraph<N> fg) {
 		this.liveness = new LivenessImplementation<N>(fg);
@@ -34,11 +35,12 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 			}
 		}
 		
+		Set<Move> movesSet = new LinkedHashSet<Move>();
 		for (Node<N> node : fg.nodes()) {
 		  // move between temps
 		  if (isMoveBetweenTemp(node)) {
 		    A_MOVE move = (A_MOVE) node.wrappee();
-		    moves.add(new Move(nodeFor(move.dst), nodeFor(move.src)));
+		    movesSet.add(new Move(nodeFor(move.dst), nodeFor(move.src)));
 		    
 		    for (Temp liveOut : liveness.liveOut(node)) {
 		      if (!liveOut.equals(move.src) && !liveOut.equals(move.dst)) {
@@ -57,6 +59,7 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		    }
 		  }
 		}
+		moves = List.list(movesSet);
 	}
 
 	private boolean isMoveBetweenTemp(Node<N> node) {
@@ -99,10 +102,7 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 	private String colorStringOf(Color c, Map<String, String> colorMap) {
 		String s = null;
 		if (c != null) s = colorMap.get(c.toString());
-		if (s == null)
-			return "red";
-		else
-			return s;
+		return s == null ? "red" : s;
 	}
 
 	@Override

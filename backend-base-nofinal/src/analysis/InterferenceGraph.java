@@ -1,4 +1,5 @@
 package analysis;
+
 import ir.temp.Color;
 import ir.temp.Temp;
 
@@ -9,7 +10,6 @@ import util.IndentingWriter;
 import util.List;
 import analysis.util.graph.Graph;
 import analysis.util.graph.Node;
-
 
 abstract public class InterferenceGraph extends Graph<Temp> {
 	
@@ -28,10 +28,31 @@ abstract public class InterferenceGraph extends Graph<Temp> {
 			out.print(" <= ");
 			out.print(src);
 		}
+		
+		@Override
+		public boolean equals(Object obj) {
+		  if (!(obj instanceof Move)) {
+		    return false;
+		  }
+		  
+		  Move anotherMove = (Move) obj;
+		  return src.wrappee().equals(anotherMove.src.wrappee()) && dst.wrappee().equals(anotherMove.dst.wrappee());
+		}
+		
+		@Override
+		public int hashCode() {
+		  int result = 17;
+		  result = 31 * result + src.wrappee().hashCode();
+		  result = 31 * result + dst.wrappee().hashCode();
+		  return result;
+		}
 	}
 	
-	abstract public List<Move> moves();
 	public String name = "Unknown";
+	
+	abstract public List<Move> moves();
+	
+	abstract public String dotString(int K, Map<Temp, Color> xcolorMap);
 	
 	/**
 	 * This default implementation will work, but you should 
@@ -41,7 +62,9 @@ abstract public class InterferenceGraph extends Graph<Temp> {
 	 * spill cost if a temp interferes with lots of other temps,
 	 * because spilling it will help avoid more spills.
 	 */
-	public double spillCost(Node<Temp> node) {return 1;}
+	public double spillCost(Node<Temp> node) {
+	  return 1;
+	}
 	
 	@Override
 	protected Node<Temp> makeNode(Temp content) {
@@ -53,7 +76,4 @@ abstract public class InterferenceGraph extends Graph<Temp> {
 			}
 		};
 	}
-
-	abstract public String dotString(int K, Map<Temp, Color> xcolorMap);
-
 }
