@@ -6,11 +6,10 @@ import static util.List.empty;
 import java.util.HashMap;
 import java.util.Map;
 
+import junit.framework.Assert;
 import util.DefaultIndentable;
 import util.IndentingWriter;
 import util.List;
-
-import junit.framework.Assert;
 
 /**
  * This is an implementation of a Graph representation. It is nearly
@@ -120,4 +119,21 @@ public class Graph<N> extends DefaultIndentable {
 		mynodes = mynodes.delete(node);
 	}
 
+	/**
+	 * Merge the second node into the first node. After merging<br>
+	 * the second node is removed from the graph
+	 * @param first
+	 * @param second
+	 */
+	public void merge(Node<N> first, Node<N> second) {
+	  for (Node<N> pred : second.pred()) {
+	    addEdge(pred, first);
+	  }
+	  
+	  for (Node<N> succ : second.succ()) {
+	    addEdge(first, succ);
+	  }
+	  
+	  rmNode(second);
+	}
 }
