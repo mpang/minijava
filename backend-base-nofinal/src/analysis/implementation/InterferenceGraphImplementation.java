@@ -3,8 +3,10 @@ package analysis.implementation;
 import ir.temp.Color;
 import ir.temp.Temp;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -20,9 +22,18 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 
 	private LivenessImplementation<N> liveness;
 	private List<Move> moves;
+	private int K;
+	// stuff below use java collections
+	private Map<Temp, Set<Temp>> coalescedTemps = new HashMap<Temp, Set<Temp>>();
+	private java.util.List<Temp> simplifyCandidates = new ArrayList<Temp>();
+	private java.util.List<Temp> spillCandidates = new ArrayList<Temp>();
+	/**
+	 * low-order, non-move related temps
+	 */
+	private java.util.List<Temp> freezeCandidates = new ArrayList<Temp>();
 
 	public InterferenceGraphImplementation(FlowGraph<N> fg) {
-		this.liveness = new LivenessImplementation<N>(fg);
+		liveness = new LivenessImplementation<N>(fg);
 		
 		// create nodes first
 		for (Node<N> node : fg.nodes()) {
@@ -37,8 +48,8 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		
 		Set<Move> movesSet = new LinkedHashSet<Move>();
 		for (Node<N> node : fg.nodes()) {
-		  // move between temps
-		  if (isMoveBetweenTemp(node)) {
+		  // move instructions
+		  if (isMove(node)) {
 		    A_MOVE move = (A_MOVE) node.wrappee();
 		    movesSet.add(new Move(nodeFor(move.dst), nodeFor(move.src)));
 		    
@@ -59,10 +70,91 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		    }
 		  }
 		}
+		
 		moves = List.list(movesSet);
 	}
-
-	private boolean isMoveBetweenTemp(Node<N> node) {
+	
+	@Override
+	public void prepareForAllocation(int k) {
+	  K = k;
+	  
+	  for (Node<Temp> node : nodes()) {
+	    if (node.wrappee().getColor() != null) {
+	      // not interested in precoloured nodes
+	      continue;
+	    } else if (node.outDegree() >= k) {
+	      spillCandidates.add(node.wrappee());
+	    } else {
+	      simplifyCandidates.add(node.wrappee());
+	    }
+	  }
+	}
+	
+	@Override
+	public boolean canProcess() {
+	  return canSimplify() || canSelectSpill();
+	}
+	
+	@Override
+	public Temp process() {
+	  if (canSimplify()) {
+      return simplify();
+    }
+	  
+    return selectSpill();
+	}
+	
+	private boolean canSimplify() {
+	  return !simplifyCandidates.isEmpty();
+	}
+	
+	private Temp simplify() {
+	  Temp head = simplifyCandidates.remove(0);
+	  rmNode(nodeFor(head));
+	  checkSpill();
+	  return head;
+	}
+	
+	/**
+	 * Check if any potential spill node can be simplified now
+	 */
+	private void checkSpill() {
+	  Iterator<Temp> iterator = spillCandidates.iterator();
+    while (iterator.hasNext()) {
+      Temp next = iterator.next();
+      if (nodeFor(next).outDegree() < K) {
+        simplifyCandidates.add(next);
+        iterator.remove();
+      }
+    }
+	}
+	
+	private boolean canSelectSpill() {
+	  return !spillCandidates.isEmpty();
+	}
+	
+	private Temp selectSpill() {
+	 simplifyCandidates.add(spillCandidates.remove(0));
+	 return simplify();
+	}
+	
+	private void coalesce(Node<Temp> first, Node<Temp> second) {
+	  merge(first, second);
+	  if (!coalescedTemps.containsKey(first.wrappee())) {
+	    coalescedTemps.put(first.wrappee(), new HashSet<Temp>());
+	  }
+	  coalescedTemps.get(first.wrappee()).add(second.wrappee());
+	}
+	
+	private boolean hasCoalesce(Node<Temp> node) {
+	  return coalescedTemps.containsKey(node.wrappee());
+	}
+	
+	private Set<Temp> getCoalesce(Node<Temp> node) {
+	  return coalescedTemps.get(node.wrappee());
+	}
+	
+	private boolean isMove(Node<N> node) {
 	  return node.wrappee() instanceof A_MOVE;
 	}
 	
@@ -89,7 +181,6 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		out.print("Moves");
 		out.println(moves);
 	}
-
 
 	private Color colorOf(Temp t, Map<Temp, Color> xcolorMap) {
 		Color c = null;
@@ -174,5 +265,4 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		out.append("}\n");
 		return out.toString();
 	}
-
 }

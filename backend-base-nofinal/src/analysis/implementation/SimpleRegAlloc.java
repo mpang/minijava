@@ -80,7 +80,7 @@ public class SimpleRegAlloc extends RegAlloc {
 		this.trace += "\n" + "Flow graph:\n" + fg.toString();
 		this.trace += ig.toString();
 
-		List<Temp> ordering = simplify();
+		List<Temp> ordering = process();
 
 		build(); // must rebuild the graph, since simplify should destroy it.
 		color(ordering);
@@ -141,24 +141,14 @@ public class SimpleRegAlloc extends RegAlloc {
 	 * in which nodes should be assigned colors.
 	 * 
 	 */
-	private List<Temp> simplify() {
-		List<Node<Temp>> toColor = List.empty();
-		List<Temp> ordering = List.empty();
-
-		// Separate pre-colored nodes from other nodes.
-		for (Node<Temp> node : ig.nodes()) {
-			if (!isColored(node)) {
-				toColor.add(node);
-			}
-		}
-		
-		while (!toColor.isEmpty()) {
-			Node<Temp> node = selectLowDegreeNode(toColor);
-			toColor = toColor.delete(node);
-			ordering = List.cons(node.wrappee(), ordering);
-			ig.rmNode(node);
-		}
-		
+	private List<Temp> process() {
+	  List<Temp> ordering = List.empty();
+	  ig.prepareForAllocation(registers.size());
+	  
+	  while (ig.canProcess()) {
+	    ordering = List.cons(ig.process(), ordering);
+	  }
+	  
 		return ordering;
 	}
 	
