@@ -152,21 +152,6 @@ public class SimpleRegAlloc extends RegAlloc {
 		return ordering;
 	}
 	
-	private Node<Temp> selectLowDegreeNode(List<Node<Temp>> nodes) {
-	  for (Node<Temp> node : nodes) {
-	    if (node.outDegree() < registers.size()) {
-	      return node;
-	    }
-	  }
-	  
-	  // pick a random node when can't find node with less significant degree
-	  return nodes.head();
-	}
-
-	private boolean isColored(Node<Temp> node) {
-		return getColor(node)!=null;
-	}
-
 	private Color getColor(Node<Temp> node) {
 		return getColor(node.wrappee());
 	}
