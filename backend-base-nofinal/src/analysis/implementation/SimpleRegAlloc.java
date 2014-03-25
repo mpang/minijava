@@ -103,8 +103,8 @@ public class SimpleRegAlloc extends RegAlloc {
     
 		if (!success) {
 			//Create a new spill slot and use that.
-			SpillColor color = new SpillColor(frame);
-			spillColors.add(color);
+			Color color = new SpillColor(frame);
+			spillColors = spillColors.append(List.list(color));
 			setColor(t, color);
 		}
 		
