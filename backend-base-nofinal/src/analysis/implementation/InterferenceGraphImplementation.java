@@ -24,13 +24,9 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 	private List<Move> moves;
 	private int K;
 	// stuff below use java collections
-	private Map<Temp, Set<Temp>> coalescedTemps = new HashMap<Temp, Set<Temp>>();
+	private Set<Temp> precoloured = new HashSet<Temp>();
 	private java.util.List<Temp> simplifyCandidates = new ArrayList<Temp>();
 	private java.util.List<Temp> spillCandidates = new ArrayList<Temp>();
-	/**
-	 * low-order, non-move related temps
-	 */
-	private java.util.List<Temp> freezeCandidates = new ArrayList<Temp>();
 
 	public InterferenceGraphImplementation(FlowGraph<N> fg) {
 		liveness = new LivenessImplementation<N>(fg);
@@ -79,13 +75,14 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 	  K = k;
 	  
 	  for (Node<Temp> node : nodes()) {
-	    if (node.wrappee().getColor() != null) {
-	      // not interested in precoloured nodes
-	      continue;
+	    Temp temp = node.wrappee();
+	    
+	    if (temp.getColor() != null) {
+	      precoloured.add(temp);
 	    } else if (node.outDegree() >= k) {
-	      spillCandidates.add(node.wrappee());
+	      spillCandidates.add(temp);
 	    } else {
-	      simplifyCandidates.add(node.wrappee());
+	      simplifyCandidates.add(temp);
 	    }
 	  }
 	}
@@ -136,22 +133,6 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 	private Temp selectSpill() {
 	 simplifyCandidates.add(spillCandidates.remove(0));
 	 return simplify();
-	}
-	
-	private void coalesce(Node<Temp> first, Node<Temp> second) {
-	  merge(first, second);
-	  if (!coalescedTemps.containsKey(first.wrappee())) {
-	    coalescedTemps.put(first.wrappee(), new HashSet<Temp>());
-	  }
-	  coalescedTemps.get(first.wrappee()).add(second.wrappee());
-	}
-	
-	private boolean hasCoalesce(Node<Temp> node) {
-	  return coalescedTemps.containsKey(node.wrappee());
-	}
-	
-	private Set<Temp> getCoalesce(Node<Temp> node) {
-	  return coalescedTemps.get(node.wrappee());
 	}
 	
 	private boolean isMove(Node<N> node) {
