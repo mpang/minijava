@@ -28,14 +28,12 @@ public class SimpleRegAlloc extends RegAlloc {
 	private FlowGraph<Instr> fg;
 	private InterferenceGraph ig;
 	private Frame frame;
-	private static final boolean generateDotFiles = false;
 
 	private Map<Temp, Color> colorMap = new HashMap<Temp, Color>();
 	private List<Temp> registers;
 	private List<Color> colors;
 	private List<Color> spillColors = List.empty();
 	private int iteration;
-	static private int incarnation = 0;
 
 	/**
 	 * List of *actual* spills.

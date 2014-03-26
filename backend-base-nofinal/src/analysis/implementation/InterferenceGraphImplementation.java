@@ -20,10 +20,8 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 
 	private LivenessImplementation<N> liveness;
 	private List<Move> moves;
-	private FlowGraph<N> fg;
 
 	public InterferenceGraphImplementation(FlowGraph<N> fg) {
-	  this.fg = fg;
 		liveness = new LivenessImplementation<N>(fg);
 		
 		// create nodes first
