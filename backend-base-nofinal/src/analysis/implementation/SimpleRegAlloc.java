@@ -196,8 +196,8 @@ public class SimpleRegAlloc extends RegAlloc {
   }
 	
 	private Temp selectSpill() {
-   simplifyCandidates.add(spillCandidates.remove(0));
-   return simplify();
+	  simplifyCandidates.add(spillCandidates.remove(0));
+	  return simplify();
   }
 	
 	private Color getColor(Node<Temp> node) {
