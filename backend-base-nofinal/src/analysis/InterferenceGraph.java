@@ -54,16 +54,6 @@ abstract public class InterferenceGraph extends Graph<Temp> {
 	
 	abstract public String dotString(int K, Map<Temp, Color> xcolorMap);
 	
-	abstract public boolean canProcess();
-	
-	abstract public Temp process();
-	
-	/**
-	 * 
-	 * @param k number of pre-coloured nodes (machine registers)
-	 */
-	abstract public void prepareForAllocation(int k);
-	
 	/**
 	 * This default implementation will work, but you should 
 	 * override it to provide a better implementation. 

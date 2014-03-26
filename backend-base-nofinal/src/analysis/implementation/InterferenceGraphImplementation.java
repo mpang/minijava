@@ -3,10 +3,8 @@ package analysis.implementation;
 import ir.temp.Color;
 import ir.temp.Temp;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -22,13 +20,10 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 
 	private LivenessImplementation<N> liveness;
 	private List<Move> moves;
-	private int K;
-	// stuff below use java collections
-	private Set<Temp> precoloured = new HashSet<Temp>();
-	private java.util.List<Temp> simplifyCandidates = new ArrayList<Temp>();
-	private java.util.List<Temp> spillCandidates = new ArrayList<Temp>();
+	private FlowGraph<N> fg;
 
 	public InterferenceGraphImplementation(FlowGraph<N> fg) {
+	  this.fg = fg;
 		liveness = new LivenessImplementation<N>(fg);
 		
 		// create nodes first
@@ -68,71 +63,6 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		}
 		
 		moves = List.list(movesSet);
-	}
-	
-	@Override
-	public void prepareForAllocation(int k) {
-	  K = k;
-	  
-	  for (Node<Temp> node : nodes()) {
-	    Temp temp = node.wrappee();
-	    
-	    if (temp.getColor() != null) {
-	      precoloured.add(temp);
-	    } else if (node.outDegree() >= k) {
-	      spillCandidates.add(temp);
-	    } else {
-	      simplifyCandidates.add(temp);
-	    }
-	  }
-	}
-	
-	@Override
-	public boolean canProcess() {
-	  return canSimplify() || canSelectSpill();
-	}
-	
-	@Override
-	public Temp process() {
-	  if (canSimplify()) {
-      return simplify();
-    }
-	  
-    return selectSpill();
-	}
-	
-	private boolean canSimplify() {
-	  return !simplifyCandidates.isEmpty();
-	}
-	
-	private Temp simplify() {
-	  Temp head = simplifyCandidates.remove(0);
-	  rmNode(nodeFor(head));
-	  checkSpill();
-	  return head;
-	}
-	
-	/**
-	 * Check if any potential spill node can be simplified now
-	 */
-	private void checkSpill() {
-	  Iterator<Temp> iterator = spillCandidates.iterator();
-    while (iterator.hasNext()) {
-      Temp next = iterator.next();
-      if (nodeFor(next).outDegree() < K) {
-        simplifyCandidates.add(next);
-        iterator.remove();
-      }
-    }
-	}
-	
-	private boolean canSelectSpill() {
-	  return !spillCandidates.isEmpty();
-	}
-	
-	private Temp selectSpill() {
-	 simplifyCandidates.add(spillCandidates.remove(0));
-	 return simplify();
 	}
 	
 	private boolean isMove(Node<N> node) {

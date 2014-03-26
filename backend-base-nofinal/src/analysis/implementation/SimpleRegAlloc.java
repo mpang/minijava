@@ -4,8 +4,12 @@ import ir.frame.Frame;
 import ir.temp.Color;
 import ir.temp.Temp;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Assert;
 import util.IndentingWriter;
@@ -24,17 +28,23 @@ public class SimpleRegAlloc extends RegAlloc {
 	private FlowGraph<Instr> fg;
 	private InterferenceGraph ig;
 	private Frame frame;
+	private static final boolean generateDotFiles = false;
 
 	private Map<Temp, Color> colorMap = new HashMap<Temp, Color>();
 	private List<Temp> registers;
 	private List<Color> colors;
 	private List<Color> spillColors = List.empty();
 	private int iteration;
+	static private int incarnation = 0;
 
 	/**
 	 * List of *actual* spills.
 	 */
 	private List<Temp> spilled = List.empty();
+	
+	private Set<Node<Temp>> precoloured = new HashSet<Node<Temp>>();
+  private java.util.List<Node<Temp>> simplifyCandidates = new ArrayList<Node<Temp>>();
+  private java.util.List<Node<Temp>> spillCandidates = new ArrayList<Node<Temp>>();
 
 	@Override
 	public void dump(IndentingWriter out) {
@@ -143,14 +153,53 @@ public class SimpleRegAlloc extends RegAlloc {
 	 */
 	private List<Temp> process() {
 	  List<Temp> ordering = List.empty();
-	  ig.prepareForAllocation(registers.size());
+	  prepareForAllocation();
 	  
-	  while (ig.canProcess()) {
-	    ordering = List.cons(ig.process(), ordering);
+	  while (!simplifyCandidates.isEmpty() || !spillCandidates.isEmpty()) {
+	    if (!simplifyCandidates.isEmpty()) {
+	      ordering = List.cons(simplify(), ordering);
+	    } else {
+	      ordering = List.cons(selectSpill(), ordering);
+	    }
 	  }
 	  
 		return ordering;
 	}
+	
+	private void prepareForAllocation() {
+	  for (Node<Temp> node : ig.nodes()) {
+	    if (node.wrappee().getColor() != null) {
+        precoloured.add(node);
+      } else if (node.outDegree() >= registers.size()) {
+        spillCandidates.add(node);
+      } else {
+        simplifyCandidates.add(node);
+      }
+	  }
+	}
+	
+	private Temp simplify() {
+	  Node<Temp> head = simplifyCandidates.remove(0);
+    ig.rmNode(head);
+    checkSpill();
+    return head.wrappee();
+	}
+	
+	private void checkSpill() {
+    Iterator<Node<Temp>> iterator = spillCandidates.iterator();
+    while (iterator.hasNext()) {
+      Node<Temp> next = iterator.next();
+      if (next.outDegree() < registers.size()) {
+        simplifyCandidates.add(next);
+        iterator.remove();
+      }
+    }
+  }
+	
+	private Temp selectSpill() {
+   simplifyCandidates.add(spillCandidates.remove(0));
+   return simplify();
+  }
 	
 	private Color getColor(Node<Temp> node) {
 		return getColor(node.wrappee());
