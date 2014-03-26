@@ -40,9 +40,9 @@ public class SimpleRegAlloc extends RegAlloc {
 	 */
 	private List<Temp> spilled = List.empty();
 	
-	private Set<Node<Temp>> precoloured = new HashSet<Node<Temp>>();
-  private java.util.List<Node<Temp>> simplifyCandidates = new ArrayList<Node<Temp>>();
-  private java.util.List<Node<Temp>> spillCandidates = new ArrayList<Node<Temp>>();
+	private Set<Temp> precoloured = new HashSet<Temp>();
+  private java.util.List<Temp> simplifyCandidates = new ArrayList<Temp>();
+  private java.util.List<Temp> spillCandidates = new ArrayList<Temp>();
 
 	@Override
 	public void dump(IndentingWriter out) {
@@ -166,28 +166,29 @@ public class SimpleRegAlloc extends RegAlloc {
 	
 	private void prepareForAllocation() {
 	  for (Node<Temp> node : ig.nodes()) {
-	    if (node.wrappee().getColor() != null) {
-        precoloured.add(node);
+	    Temp temp = node.wrappee();
+	    if (temp.getColor() != null) {
+        precoloured.add(temp);
       } else if (node.outDegree() >= registers.size()) {
-        spillCandidates.add(node);
+        spillCandidates.add(temp);
       } else {
-        simplifyCandidates.add(node);
+        simplifyCandidates.add(temp);
       }
 	  }
 	}
 	
 	private Temp simplify() {
-	  Node<Temp> head = simplifyCandidates.remove(0);
-    ig.rmNode(head);
+	  Temp head = simplifyCandidates.remove(0);
+    ig.rmNode(ig.nodeFor(head));
     checkSpill();
-    return head.wrappee();
+    return head;
 	}
 	
 	private void checkSpill() {
-    Iterator<Node<Temp>> iterator = spillCandidates.iterator();
+    Iterator<Temp> iterator = spillCandidates.iterator();
     while (iterator.hasNext()) {
-      Node<Temp> next = iterator.next();
-      if (next.outDegree() < registers.size()) {
+      Temp next = iterator.next();
+      if (ig.nodeFor(next).outDegree() < registers.size()) {
         simplifyCandidates.add(next);
         iterator.remove();
       }
