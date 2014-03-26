@@ -1,10 +1,12 @@
 package analysis.implementation;
 
+import static util.List.list;
 import ir.frame.Frame;
 import ir.temp.Color;
 import ir.temp.Temp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,6 +18,7 @@ import util.IndentingWriter;
 import util.List;
 import analysis.FlowGraph;
 import analysis.InterferenceGraph;
+import analysis.InterferenceGraph.Move;
 import analysis.RegAlloc;
 import analysis.util.graph.Node;
 import codegen.AssemProc;
@@ -39,10 +42,27 @@ public class SimpleRegAlloc extends RegAlloc {
 	 * List of *actual* spills.
 	 */
 	private List<Temp> spilled = List.empty();
+	private List<Temp> colorOrdering = List.empty();
 	
+	private final int K;
 	private Set<Temp> precoloured = new HashSet<Temp>();
   private java.util.List<Temp> simplifyCandidates = new ArrayList<Temp>();
+  private java.util.List<Move> coalesceCandidates = new ArrayList<Move>();
+  private java.util.List<Temp> freezeCandidates = new ArrayList<Temp>();
   private java.util.List<Temp> spillCandidates = new ArrayList<Temp>();
+  
+  private Set<Move> coalescedMoves = new HashSet<Move>();
+  private Set<Move> constrainedMoves = new HashSet<Move>();
+  private Set<Move> frozenMoves = new HashSet<Move>();
+  private Set<Move> activeMoves = new HashSet<Move>();
+  /**
+   * mapping between temp and its associated moves
+   */
+  private Map<Temp, Set<Move>> tempMoveMapping = new HashMap<Temp, Set<Move>>();
+  /**
+   * key: temps that are coalesced; value: temp that represent the coalesced one
+   */
+  private Map<Temp, Temp> alias = new HashMap<Temp, Temp>();
 
 	@Override
 	public void dump(IndentingWriter out) {
@@ -79,6 +99,7 @@ public class SimpleRegAlloc extends RegAlloc {
 		this.trace += proc.toString();
 		this.frame = proc.getFrame();
 		this.registers = frame.registers();
+		this.K = registers.size();
 
 		this.colors = List.empty();
 		for (Temp reg : registers) 
@@ -88,10 +109,10 @@ public class SimpleRegAlloc extends RegAlloc {
 		this.trace += "\n" + "Flow graph:\n" + fg.toString();
 		this.trace += ig.toString();
 
-		List<Temp> ordering = process();
+		process();
 
 		build(); // must rebuild the graph, since simplify should destroy it.
-		color(ordering);
+		color(colorOrdering);
 	}
 
 	private void color(List<Temp> toColor) {
@@ -149,56 +170,205 @@ public class SimpleRegAlloc extends RegAlloc {
 	 * in which nodes should be assigned colors.
 	 * 
 	 */
-	private List<Temp> process() {
-	  List<Temp> ordering = List.empty();
+	private void process() {
 	  prepareForAllocation();
 	  
-	  while (!simplifyCandidates.isEmpty() || !spillCandidates.isEmpty()) {
+	  while (!simplifyCandidates.isEmpty() || !coalesceCandidates.isEmpty() ||
+	         !freezeCandidates.isEmpty() || !spillCandidates.isEmpty()) {
+	    
 	    if (!simplifyCandidates.isEmpty()) {
-	      ordering = List.cons(simplify(), ordering);
+	      simplify();
+	    } else if (!coalesceCandidates.isEmpty()) {
+	      coalesce();
+	    } else if (!freezeCandidates.isEmpty()) {
+	      freeze();
 	    } else {
-	      ordering = List.cons(selectSpill(), ordering);
+	      selectSpill();
 	    }
 	  }
-	  
-		return ordering;
 	}
 	
 	private void prepareForAllocation() {
+	  for (Move move : ig.moves()) {
+      coalesceCandidates.add(move);
+      for (Temp temp : list(move.src.wrappee()).append(list(move.dst.wrappee()))) {
+        if (!tempMoveMapping.containsKey(temp)) {
+          tempMoveMapping.put(temp, new HashSet<Move>());
+        }
+        tempMoveMapping.get(temp).add(move);
+      }
+    }
+	  
 	  for (Node<Temp> node : ig.nodes()) {
 	    Temp temp = node.wrappee();
 	    if (temp.getColor() != null) {
         precoloured.add(temp);
-      } else if (node.outDegree() >= registers.size()) {
+      } else if (node.outDegree() >= K) {
         spillCandidates.add(temp);
+      } else if (tempMoveMapping.containsKey(temp)) {
+        freezeCandidates.add(temp);
       } else {
         simplifyCandidates.add(temp);
       }
 	  }
 	}
 	
-	private Temp simplify() {
+	private void simplify() {
 	  Temp head = simplifyCandidates.remove(0);
+	  colorOrdering = List.cons(head, colorOrdering);
     ig.rmNode(ig.nodeFor(head));
     checkSpill();
-    return head;
+	}
+	
+	/**
+	 * 
+	 * @param temp
+	 * @return moves related to a temp that are not coalesced, constrained, or frozen
+	 */
+	private Set<Move> nodeMoves(Temp temp) {
+	  if (!tempMoveMapping.containsKey(temp)) {
+	    return new HashSet<Move>();
+	  }
+	  
+	  Set<Move> allMoves = new HashSet<Move>(tempMoveMapping.get(temp));
+	  Set<Move> coalescedCandidatesCopy = new HashSet<Move>(coalesceCandidates);
+	  coalescedCandidatesCopy.addAll(activeMoves);
+	  allMoves.retainAll(coalescedCandidatesCopy);
+	  return allMoves;
+	}
+	
+	private void enableMoves(java.util.List<Temp> temps) {
+	  for (Temp temp : temps) {
+	    for (Move move : nodeMoves(temp)) {
+	      if (activeMoves.contains(move)) {
+	        activeMoves.remove(move);
+	        coalesceCandidates.add(move);
+	      }
+	    }
+	  }
 	}
 	
 	private void checkSpill() {
     Iterator<Temp> iterator = spillCandidates.iterator();
     while (iterator.hasNext()) {
       Temp next = iterator.next();
-      if (ig.nodeFor(next).outDegree() < registers.size()) {
-        simplifyCandidates.add(next);
+      
+      if (ig.nodeFor(next).outDegree() < K) {
+        java.util.List<Temp> temps = new ArrayList<Temp>();
+        temps.add(next);
+        for (Node<Temp> neighbours : ig.nodeFor(next).succ()) {
+          temps.add(neighbours.wrappee());
+        }
+        enableMoves(temps);
+        
+        if (nodeMoves(next).isEmpty()) {
+          simplifyCandidates.add(next);
+        } else {
+          freezeCandidates.add(next);
+        }
+        
         iterator.remove();
       }
     }
   }
 	
-	private Temp selectSpill() {
-	  simplifyCandidates.add(spillCandidates.remove(0));
-	  return simplify();
+	private void selectSpill() {
+	  Temp temp = spillCandidates.remove(0);
+	  simplifyCandidates.add(temp);
+	  freezeMoves(temp);
   }
+	
+	private Temp getAlias(Temp temp) {
+	  if (alias.containsKey(temp)) {
+	    return getAlias(alias.get(temp));
+	  }
+	  
+	  return temp;
+	}
+	
+	private void addToCandidates(Temp temp) {
+	  if (!precoloured.contains(temp) && nodeMoves(temp).isEmpty() && ig.nodeFor(temp).outDegree() < K) {
+	    freezeCandidates.remove(temp);
+	    simplifyCandidates.add(temp);
+	  }
+	}
+	
+	private boolean canCoalesceTemps(Temp a, Temp b) {
+	  int count = 0;
+	  Set<Node<Temp>> nodes = new HashSet<Node<Temp>>();
+	  for (Node<Temp> node : ig.nodeFor(a).succ().append(ig.nodeFor(b).succ())) {
+	    nodes.add(node);
+	  }
+	  
+	  for (Node<Temp> node : nodes) {
+	    if (node.outDegree() >= K) {
+	      count++;
+	    }
+	  }
+	  
+	  return count < K;
+	}
+	
+	private void coalesce(Temp a, Temp b) {
+	  if (freezeCandidates.contains(b)) {
+	    freezeCandidates.remove(b);
+	  } else {
+	    spillCandidates.remove(b);
+	  }
+	  
+	  alias.put(b, a);
+	  tempMoveMapping.get(a).addAll(tempMoveMapping.get(b));
+	  enableMoves(Arrays.asList(b));
+	  ig.merge(ig.nodeFor(a), ig.nodeFor(b));
+	  checkSpill();
+	  if (ig.nodeFor(a).outDegree() >= K && freezeCandidates.contains(a)) {
+	    freezeCandidates.remove(a);
+	    spillCandidates.add(a);
+	  }
+	}
+	
+	private void coalesce() {
+	  Move move = coalesceCandidates.remove(0);
+	  Temp src = getAlias(move.src.wrappee());
+	  Temp dst = getAlias(move.dst.wrappee());
+	  
+	  if (src.equals(dst)) {
+      coalescedMoves.add(move);
+      addToCandidates(src);
+    } else if ((precoloured.contains(src) && precoloured.contains(dst)) || ig.nodeFor(src).goesTo(ig.nodeFor(dst))) {
+      constrainedMoves.add(move);
+      addToCandidates(src);
+      addToCandidates(dst);
+    } else if (canCoalesceTemps(src, dst)) {
+      coalescedMoves.add(move);
+      coalesce(src, dst);
+      addToCandidates(src);
+    } else {
+      activeMoves.add(move);
+    }
+	}
+	
+	private void freeze() {
+	  Temp temp = freezeCandidates.remove(0);
+	  simplifyCandidates.add(temp);
+	  freezeMoves(temp);
+	}
+	
+	private void freezeMoves(Temp temp) {
+	  for (Move move : nodeMoves(temp)) {
+      Temp src = getAlias(move.src.wrappee());
+      Temp dst = getAlias(move.dst.wrappee());
+      Temp anotherTemp = getAlias(temp).equals(src) ? dst : src;
+      
+      activeMoves.remove(move);
+      frozenMoves.add(move);
+      
+      if (freezeCandidates.contains(anotherTemp) && nodeMoves(anotherTemp).isEmpty()) {
+        freezeCandidates.remove(anotherTemp);
+        simplifyCandidates.add(anotherTemp);
+      }
+    }
+	}
 	
 	private Color getColor(Node<Temp> node) {
 		return getColor(node.wrappee());
