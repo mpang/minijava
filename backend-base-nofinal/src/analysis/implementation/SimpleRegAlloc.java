@@ -339,8 +339,17 @@ public class SimpleRegAlloc extends RegAlloc {
       addToCandidates(dst);
     } else if (canCoalesceTemps(src, dst)) {
       coalescedMoves.add(move);
-      coalesce(src, dst);
-      addToCandidates(src);
+      
+      if (precoloured.contains(dst)) {
+        coalesce(dst, src);
+        addToCandidates(dst);
+      } else {
+        coalesce(src, dst);
+        addToCandidates(src);
+      }
+      
+      //coalesce(src, dst);
+      //addToCandidates(src);
     } else {
       activeMoves.add(move);
     }
