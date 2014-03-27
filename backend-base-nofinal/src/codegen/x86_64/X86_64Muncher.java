@@ -302,17 +302,6 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
-    /*
-    sm.add(new MunchRule<IRStm, Void>( CMOVE( _relOp_, _l_, _r_, TEMP(_t_), _e_ ) ) {
-      @Override
-      protected Void trigger(Muncher m, Matched c) {
-        m.emit( A_CMP(m.munch(c.get(_l_)), m.munch(c.get(_r_)))    );
-        m.emit( A_CMOV(c.get(_relOp_), c.get(_t_), m.munch(c.get(_e_))) );
-        return null;
-      }
-    });
-    */
-    
     sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, MEM(MINUS(_r_, CONST(_i_))), TEMP(_t_), _e_)) {
       @Override
       protected Void trigger(Muncher m, Matched match) {
