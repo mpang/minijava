@@ -293,42 +293,14 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
-    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, MEM(PLUS(CONST(_i_), _e_)), _r_, _thn_, _els_)) {
+    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, TEMP(_t_), CONST(_i_), _thn_, _els_)) {
       @Override
-      protected Void trigger(Muncher m, Matched c) {
-        m.emit(A_CMP_FROM_MEM(c.get(_i_), m.munch(c.get(_e_)), m.munch(c.get(_r_))));
-        m.emit(A_CJUMP(c.get(_relOp_), c.get(_thn_), c.get(_els_)));
+      protected Void trigger(Muncher m, Matched match) {
+        m.emit(A_CMP(match.get(_t_), match.get(_i_)));
+        m.emit(A_CJUMP(match.get(_relOp_), match.get(_thn_), match.get(_els_)));
         return null;
       }
     });
-    
-    sm.add(new MunchRule<IRStm, Void>(CJUMP(_relOp_, MEM(MINUS(_e_, CONST(_i_))), _r_, _thn_, _els_)) {
-      @Override
-      protected Void trigger(Muncher m, Matched c) {
-        m.emit(A_CMP_FROM_MEM(-1 * c.get(_i_), m.munch(c.get(_e_)), m.munch(c.get(_r_))));
-        m.emit(A_CJUMP(c.get(_relOp_), c.get(_thn_), c.get(_els_)));
-        return null;
-      }
-    });
-    
-    sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, MEM(MINUS(_r_, CONST(_i_))), TEMP(_t_), _e_)) {
-      @Override
-      protected Void trigger(Muncher m, Matched c) {
-        m.emit(A_CMP_FROM_MEM(-1 * c.get(_i_), m.munch(c.get(_r_)), m.munch(c.get(_l_))));
-        m.emit(A_CMOV(c.get(_relOp_), c.get(_t_), m.munch(c.get(_e_))));
-        return null;
-      }
-    });
-    
-    sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, MEM(PLUS(_r_, CONST(_i_))), TEMP(_t_), _e_)) {
-      @Override
-      protected Void trigger(Muncher m, Matched c) {
-        m.emit(A_CMP_FROM_MEM(c.get(_i_), m.munch(c.get(_r_)), m.munch(c.get(_l_))));
-        m.emit(A_CMOV(c.get(_relOp_), c.get(_t_), m.munch(c.get(_e_))));
-        return null;
-      }
-    });
-    
     
     // ############ expressions ############
     
