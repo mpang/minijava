@@ -5,7 +5,6 @@ import ir.temp.Temp;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,7 +18,7 @@ import codegen.assem.A_MOVE;
 public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 
 	private LivenessImplementation<N> liveness;
-	private List<Move> moves;
+	private List<Move> moves = List.empty();
 
 	public InterferenceGraphImplementation(FlowGraph<N> fg) {
 		liveness = new LivenessImplementation<N>(fg);
@@ -35,12 +34,11 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 			}
 		}
 		
-		Set<Move> movesSet = new LinkedHashSet<Move>();
 		for (Node<N> node : fg.nodes()) {
 		  // move instructions
 		  if (isMove(node)) {
 		    A_MOVE move = (A_MOVE) node.wrappee();
-		    movesSet.add(new Move(nodeFor(move.dst), nodeFor(move.src)));
+		    moves.add(new Move(nodeFor(move.dst), nodeFor(move.src)));
 		    
 		    for (Temp liveOut : liveness.liveOut(node)) {
 		      if (!liveOut.equals(move.src) && !liveOut.equals(move.dst)) {
@@ -59,8 +57,6 @@ public class InterferenceGraphImplementation<N> extends InterferenceGraph {
 		    }
 		  }
 		}
-		
-		moves = List.list(movesSet);
 	}
 	
 	private boolean isMove(Node<N> node) {
