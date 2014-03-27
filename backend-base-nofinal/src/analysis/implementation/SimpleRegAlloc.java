@@ -1,6 +1,5 @@
 package analysis.implementation;
 
-import static util.List.list;
 import ir.frame.Frame;
 import ir.temp.Color;
 import ir.temp.Temp;
@@ -191,7 +190,7 @@ public class SimpleRegAlloc extends RegAlloc {
 	private void prepareForAllocation() {
 	  for (Move move : ig.moves()) {
       coalesceCandidates.add(move);
-      for (Temp temp : list(move.src.wrappee()).append(list(move.dst.wrappee()))) {
+      for (Temp temp : Arrays.asList(move.src.wrappee(), move.dst.wrappee())) {
         if (!tempMoveMapping.containsKey(temp)) {
           tempMoveMapping.put(temp, new HashSet<Move>());
         }
@@ -254,8 +253,7 @@ public class SimpleRegAlloc extends RegAlloc {
       Temp next = iterator.next();
       
       if (ig.nodeFor(next).outDegree() < K) {
-        java.util.List<Temp> temps = new ArrayList<Temp>();
-        temps.add(next);
+        java.util.List<Temp> temps = new ArrayList<Temp>(Arrays.asList(next));
         for (Node<Temp> neighbours : ig.nodeFor(next).succ()) {
           temps.add(neighbours.wrappee());
         }
