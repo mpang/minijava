@@ -302,6 +302,27 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
+    /*
+    sm.add(new MunchRule<IRStm, Void>( CMOVE( _relOp_, _l_, _r_, TEMP(_t_), _e_ ) ) {
+      @Override
+      protected Void trigger(Muncher m, Matched c) {
+        m.emit( A_CMP(m.munch(c.get(_l_)), m.munch(c.get(_r_)))    );
+        m.emit( A_CMOV(c.get(_relOp_), c.get(_t_), m.munch(c.get(_e_))) );
+        return null;
+      }
+    });
+    */
+    
+    sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, MEM(MINUS(_r_, CONST(_i_))), TEMP(_t_), _e_)) {
+      @Override
+      protected Void trigger(Muncher m, Matched match) {
+        m.emit(A_CMP_FROM_MEM(m.munch(match.get(_l_)), -1 * match.get(_i_), m.munch(match.get(_r_))));
+        m.emit(A_CMOV(match.get(_relOp_), match.get(_t_), m.munch(match.get(_e_))));
+        return null;
+      }
+    });
+    
+    
     // ############ expressions ############
     
     em.add(new MunchRule<IRExp, Temp>(AND(_l_, _r_)) {
@@ -464,9 +485,9 @@ public class X86_64Muncher extends Muncher {
   private static Instr A_CMP(Temp l, int r) {
     return new A_OPER("cmpq    $" + r + ", `s0", noTemps, list(l));
   }
-
-  private static Instr A_CMP_FROM_MEM(int offset, Temp ptr, Temp dst) {
-    return new A_OPER("cmpq    " + offset + "(`s1), `s0", noTemps, list(dst, ptr));
+  
+  private static Instr A_CMP_FROM_MEM(Temp l, int offset, Temp ptr) {
+    return new A_OPER("cmpq    " + offset + "(`s1), `s0", noTemps, list(l, ptr));
   }
   
   private static Instr A_IMUL(Temp dst, Temp src) {
