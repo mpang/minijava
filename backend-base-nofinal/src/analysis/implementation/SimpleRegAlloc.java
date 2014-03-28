@@ -104,9 +104,6 @@ public class SimpleRegAlloc extends RegAlloc {
 		Temp t = toColor.head();
 		boolean success;
 
-		// Try to color using a register
-		//success = tryToColor(t, colors);
-		
 		List<Color> moveRelatedColors = List.empty();
 		List<Color> nonMoveRelatedColors = colors;
 		
@@ -120,8 +117,10 @@ public class SimpleRegAlloc extends RegAlloc {
 		  }
 		}
 		
+		// color with move related registers first
 		success = tryToColor(t, moveRelatedColors);
 		
+		// use non-move related registers
 		if (!success) {
 		  success = tryToColor(t, nonMoveRelatedColors);
 		}
