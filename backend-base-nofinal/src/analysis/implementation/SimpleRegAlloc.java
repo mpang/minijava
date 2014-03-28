@@ -16,6 +16,7 @@ import util.IndentingWriter;
 import util.List;
 import analysis.FlowGraph;
 import analysis.InterferenceGraph;
+import analysis.InterferenceGraph.Move;
 import analysis.RegAlloc;
 import analysis.util.graph.Node;
 import codegen.AssemProc;
@@ -45,6 +46,7 @@ public class SimpleRegAlloc extends RegAlloc {
 	private Set<Temp> precoloured = new HashSet<Temp>();
   private java.util.List<Temp> simplifyCandidates = new ArrayList<Temp>();
   private java.util.List<Temp> spillCandidates = new ArrayList<Temp>();
+  private Map<Temp, Set<Temp>> moveRelatedRegisters = new HashMap<Temp, Set<Temp>>();
   
 	@Override
 	public void dump(IndentingWriter out) {
@@ -103,8 +105,26 @@ public class SimpleRegAlloc extends RegAlloc {
 		boolean success;
 
 		// Try to color using a register
-		success = tryToColor(t, colors);
-
+		//success = tryToColor(t, colors);
+		
+		List<Color> moveRelatedColors = List.empty();
+		List<Color> nonMoveRelatedColors = colors;
+		
+		if (moveRelatedRegisters.containsKey(t)) {
+		  for (Temp temp : moveRelatedRegisters.get(t)) {
+		    moveRelatedColors = List.cons(temp.getColor(), moveRelatedColors);
+		  }
+		  
+		  for (Color color : moveRelatedColors) {
+		    nonMoveRelatedColors = nonMoveRelatedColors.delete(color);
+		  }
+		}
+		
+		success = tryToColor(t, moveRelatedColors);
+		
+		if (!success) {
+		  success = tryToColor(t, nonMoveRelatedColors);
+		}
 		
 		if (!success) {
 			// Try to spill using an existing spill slot.
@@ -175,6 +195,29 @@ public class SimpleRegAlloc extends RegAlloc {
       } else {
         simplifyCandidates.add(temp);
       }
+	  }
+	  
+	  for (Move move : ig.moves()) {
+	    if (move.src.goesTo(move.dst)) {
+	      continue;
+	    }
+	    
+	    Temp src = move.src.wrappee();
+	    Temp dst = move.dst.wrappee();
+	    
+	    if (!precoloured.contains(src) && precoloured.contains(dst)) {
+	      if (!moveRelatedRegisters.containsKey(src)) {
+	        moveRelatedRegisters.put(src, new HashSet<Temp>());
+	      }
+	      moveRelatedRegisters.get(src).add(dst);
+	    }
+	    
+	    if (!precoloured.contains(dst) && precoloured.contains(src)) {
+	      if (!moveRelatedRegisters.containsKey(dst)) {
+	        moveRelatedRegisters.put(dst, new HashSet<Temp>());
+	      }
+	      moveRelatedRegisters.get(dst).add(src);
+	    }
 	  }
 	}
 	
