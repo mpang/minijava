@@ -14,8 +14,7 @@ class TV {
     Tree root;
     boolean ntb;
     int nti;
-    //MyVisitor v;
-    Visitor v;
+    MyVisitor v;
     
     root = new Tree();
     ntb = root.Init(16);
@@ -30,8 +29,7 @@ class TV {
     ntb = root.Insert(14);
     ntb = root.Print();
     System.out.println(100000000);
-    //v = new MyVisitor();
-    v = new Visitor();
+    v = new MyVisitor();
     System.out.println(50000000);
     nti = root.accept(v);
     System.out.println(100000000);
