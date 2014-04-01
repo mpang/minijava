@@ -442,7 +442,7 @@ public class X86_64Muncher extends Muncher {
   }
 
   private static Instr A_ADD(int c, Temp dst) {
-    return new A_OPER("addq    $" + c + ", `d0", list(dst), noTemps);
+    return new A_OPER("addq    $" + c + ", `d0", list(dst), list(dst));
   }
   
   private static Instr A_ADD(int offset, Temp ptr, Temp dst) {
@@ -527,7 +527,7 @@ public class X86_64Muncher extends Muncher {
   }
   
   private static Instr A_IMUL(int c, Temp dst) {
-    return new A_OPER("imulq    $" + c + ", `d0", list(dst), noTemps);
+    return new A_OPER("imulq    $" + c + ", `d0", list(dst), list(dst));
   }
 
   private static Instr A_IDIV(Temp dst, Temp src) {
@@ -650,7 +650,7 @@ public class X86_64Muncher extends Muncher {
   }
 
   private static Instr A_SUB(int c, Temp dst) {
-    return new A_OPER("subq    $" + c + ", `d0", list(dst), noTemps);
+    return new A_OPER("subq    $" + c + ", `d0", list(dst), list(dst));
   }
   
   public static void dumpRules() {
