@@ -53,7 +53,7 @@ public class Fragments extends DefaultIndentable implements Iterable<Fragment> {
 	}
 
 	public void add(Fragment frag) {
-		frags.add(frag);
+	  frags = frags.append(List.list(frag));
 	}
 
 	/**
