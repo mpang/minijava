@@ -25,8 +25,9 @@ public class Call extends Instruction {
 			long sp = state.getReg(Instruction.SP) - Memory.SIZEOF_LONG;
 			state.ram.write(sp, state.pc);
 			state.setReg(Instruction.SP, sp);
+			long value = state.getReg(register);
 			state.do_call();
-			state.jump(state.getReg(register));
+			state.jump(value);
 		} else {
 			if (label.equals("_cs411println")  || label.equals("cs411println")) {
 				// Simulate println
