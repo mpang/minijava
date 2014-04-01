@@ -2,11 +2,11 @@ package test.analysis;
 
 import test.codegen.TestCodegen;
 import translate.Fragments;
+import analysis.FlowGraph;
 import codegen.AssemFragment;
 import codegen.AssemProc;
 import codegen.CodeGenerator;
 import codegen.assem.Instr;
-import analysis.FlowGraph;
 
 /**
  * Unfortunately, there's no good way that I can think of to test this phase
@@ -34,10 +34,11 @@ public class TestFlowGraphs extends TestCodegen {
 	protected void test(Fragments ir_fragments) {
 		CodeGenerator cogen = new CodeGenerator();
 		for (AssemFragment frag : cogen.apply(ir_fragments)) {
-			AssemProc proc = (AssemProc) frag;
-			test(proc);
-		} ;
-		
+		  if (frag instanceof AssemProc) {
+		    AssemProc proc = (AssemProc) frag;
+		    test(proc);
+		  }
+		}
 	}
 
 	protected void test(AssemProc proc) {
@@ -45,5 +46,4 @@ public class TestFlowGraphs extends TestCodegen {
 		FlowGraph<Instr> flowGraph = FlowGraph.build(proc.getBody());
 		System.out.println(flowGraph);
 	}
-
 }

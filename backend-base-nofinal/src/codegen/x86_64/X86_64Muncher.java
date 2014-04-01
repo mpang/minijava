@@ -106,6 +106,7 @@ public class X86_64Muncher extends Muncher {
 				return null;
 			}
 		});
+		
 		dm.add(new MunchRule<IRExp, Void>( NAME(_lab_) ) {
 			@Override
 			protected Void trigger(Muncher m, Matched c) {
@@ -121,6 +122,7 @@ public class X86_64Muncher extends Muncher {
 				return null;
 			}
 		});
+		
 		sm.add(new MunchRule<IRStm, Void>( JUMP(_e_) ) {
 			protected Void trigger(Muncher m, Matched children) {
 				// Expression shouldn't need to emit indirect jumps.
@@ -128,6 +130,7 @@ public class X86_64Muncher extends Muncher {
 				throw new Error("Not implemented");
 			}
 		});
+		
 		sm.add(new MunchRule<IRStm, Void>( EXP(_e_) ) {
 			@Override
 			protected Void trigger(Muncher m, Matched children) {
@@ -136,6 +139,7 @@ public class X86_64Muncher extends Muncher {
 				return null;
 			}
 		});
+		
 		sm.add(new MunchRule<IRStm, Void>( MOVE(TEMP(_t_), _e_) ) {
 			@Override
 			protected Void trigger(Muncher m, Matched c) {
@@ -144,6 +148,7 @@ public class X86_64Muncher extends Muncher {
 				return null;
 			}
 		});
+		
 		sm.add(new MunchRule<IRStm, Void>( MOVE(MEM(_l_), _r_) ) {
 			@Override
 			protected Void trigger(Muncher m, Matched c) {
@@ -152,14 +157,16 @@ public class X86_64Muncher extends Muncher {
 				m.emit(A_MOV_TO_MEM(0, d, s));
 				return null;
 			}
-		});	
+		});
+		
 		sm.add(new MunchRule<IRStm, Void>( JUMP(NAME(_lab_)) ) {
 			@Override
 			protected Void trigger(Muncher m, Matched c) {	
 				m.emit(A_JMP(c.get(_lab_)));
 				return null;
 			}
-		});		
+		});
+		
 		sm.add(new MunchRule<IRStm, Void>( CJUMP( _relOp_, _l_, _r_, _thn_, _els_ ) ) {
 			@Override
 			protected Void trigger(Muncher m, Matched c) {
@@ -168,6 +175,7 @@ public class X86_64Muncher extends Muncher {
 				return null;
 			}
 		});
+		
 		sm.add(new MunchRule<IRStm, Void>( CMOVE( _relOp_, _l_, _r_, TEMP(_t_), _e_ ) ) {
 			@Override
 			protected Void trigger(Muncher m, Matched c) {
@@ -176,13 +184,37 @@ public class X86_64Muncher extends Muncher {
 				return null;
 			}
 		});
+		
 		em.add(new MunchRule<IRExp, Temp>( CALL(_l_, _es_) ) {
 			@Override
-			protected Temp trigger(Muncher m, Matched children) {
-				// Expressions shouldn't need to emit indirect calls ( unless we implement VMT and inheritance )
-				throw new Error("Not implemented");
+			protected Temp trigger(Muncher m, Matched c) {
+			  Frame frame = m.getFrame();
+        Temp ptr = m.munch(c.get(_l_));
+        List<IRExp> args = c.get(_es_);
+        for (int i = args.size()-1; i >= 0; i--) {
+          IRExp outArg = frame.getOutArg(i).exp(frame.FP());
+          m.munch( IR.MOVE(outArg, args.get(i)) );
+        }
+        m.emit(A_CALL(ptr, args.size()));
+        return RV;
 			}
 		});
+		
+		em.add(new MunchRule<IRExp, Temp>( CALL(NAME(_lab_), _es_) ) {
+      @Override
+      protected Temp trigger(Muncher m, Matched c) {
+        Frame frame = m.getFrame();
+        Label name = c.get(_lab_);
+        List<IRExp> args = c.get(_es_);
+        for (int i = args.size()-1; i >= 0; i--) {
+          IRExp outArg = frame.getOutArg(i).exp(frame.FP());
+          m.munch( IR.MOVE(outArg, args.get(i)) );
+        }
+        m.emit(A_CALL(name, args.size()));
+        return RV;
+      }
+    });
+		
 		em.add(new MunchRule<IRExp, Temp>( CONST(_i_) ) {
 			@Override
 			protected Temp trigger(Muncher m, Matched c) {
@@ -191,6 +223,7 @@ public class X86_64Muncher extends Muncher {
 				return t;
 			}
 		});
+		
 		em.add(new MunchRule<IRExp, Temp>( PLUS(_l_, _r_) ) {
 			@Override
 			protected Temp trigger(Muncher m, Matched c) {
@@ -200,6 +233,7 @@ public class X86_64Muncher extends Muncher {
 				return sum;
 			}
 		});
+		
 		em.add(new MunchRule<IRExp, Temp>( MINUS(_l_, _r_) ) {
 			@Override
 			protected Temp trigger(Muncher m, Matched c) {
@@ -209,6 +243,7 @@ public class X86_64Muncher extends Muncher {
 				return res;
 			}
 		});
+		
 		em.add(new MunchRule<IRExp, Temp>( MUL(_l_, _r_) ) {
 			@Override
 			protected Temp trigger(Muncher m, Matched c) {
@@ -218,12 +253,14 @@ public class X86_64Muncher extends Muncher {
 				return res;
 			}
 		});
+		
 		em.add(new MunchRule<IRExp, Temp>( TEMP(_t_) ) {
 			@Override
 			protected Temp trigger(Muncher m, Matched c) {
 				return c.get(_t_);
 			}
-		});						
+		});	
+		
 		em.add(new MunchRule<IRExp, Temp>( NAME(_lab_) ) {
 			@Override
 			protected Temp trigger(Muncher m, Matched c) {
@@ -232,6 +269,7 @@ public class X86_64Muncher extends Muncher {
 				return t;
 			}
 		});
+		
 		em.add(new MunchRule<IRExp, Temp>( MEM(_e_) ) {
 			@Override
 			protected Temp trigger(Muncher m, Matched c) {
@@ -239,22 +277,8 @@ public class X86_64Muncher extends Muncher {
 				m.emit(A_MOV_FROM_MEM(0, m.munch(c.get(_e_)), r));
 				return r;
 			}
-		});	
-		em.add(new MunchRule<IRExp, Temp>( CALL(NAME(_lab_), _es_) ) {
-			@Override
-			protected Temp trigger(Muncher m, Matched c) {
-				Frame frame = m.getFrame();
-				Label name = c.get(_lab_);
-				List<IRExp> args = c.get(_es_);
-				for (int i = args.size()-1; i >= 0; i--) {
-					IRExp outArg = frame.getOutArg(i).exp(frame.FP());
-					m.munch( IR.MOVE(outArg, args.get(i)) );
-				}
-				m.emit(A_CALL(name, args.size()));
-				return RV;
-			}
-
 		});
+		
 
 		//////// For matching spilled Temps /////
 		
@@ -321,7 +345,7 @@ public class X86_64Muncher extends Muncher {
       }
     });
     
-    
+		
     // ############ expressions ############
     
     em.add(new MunchRule<IRExp, Temp>(AND(_l_, _r_)) {
@@ -422,11 +446,11 @@ public class X86_64Muncher extends Muncher {
   }
   
   private static Instr A_ADD(int offset, Temp ptr, Temp dst) {
-    return new A_OPER("addq    " + offset + "(`s0), `d0", list(dst), list(ptr));
+    return new A_OPER("addq    " + offset + "(`s0), `d0", list(dst), list(ptr, dst));
   }
   
   private static Instr A_AND(Temp dst, Temp src) {
-    return new A_OPER("andq    `s0, `d0", list(dst), list(src));
+    return new A_OPER("andq    `s0, `d0", list(dst), list(src, dst));
   }
   
   private static Instr A_CALL(Label fun, int nargs) {
@@ -436,6 +460,15 @@ public class X86_64Muncher extends Muncher {
     }
     return new A_OPER("call    " + fun, callerSave.append(arguments),
         special.append(args));
+  }
+  
+  private static Instr A_CALL(Temp ptr, int nargs) {
+    List<Temp> args = List.empty();
+    for (int i = 0; i < Math.min(arguments.size(), nargs); ++i) {
+      args.add(arguments.get(i));
+    }
+    return new A_OPER("call    *`s2", callerSave.append(arguments),
+        special.append(List.list(ptr)).append(args));
   }
 
   private static Instr A_CJUMP(RelOp relOp, Label thn, Label els) {

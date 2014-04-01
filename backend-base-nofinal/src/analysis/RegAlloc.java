@@ -1,10 +1,10 @@
 package analysis;
 
 import util.DefaultIndentable;
+import analysis.implementation.SpillingRegAlloc;
 import codegen.AssemFragment;
 import codegen.AssemProc;
 import codegen.Assembly;
-import analysis.implementation.SpillingRegAlloc;
 
 /**
  * The analysis culminates in register allocation. That is essentially
@@ -52,11 +52,11 @@ public abstract class RegAlloc extends DefaultIndentable {
 	 */
 	public static void doit(Assembly assembly) {
 		for (AssemFragment frag : assembly) {
-			if (frag instanceof AssemProc)
+			if (frag instanceof AssemProc) {
 				doit((AssemProc) frag);
-			else
-				throw new Error("RegAlloc doesn't know how to handle such fragments");
+			}
 		}
 	}
+	
 	public abstract String getTrace();
 }
