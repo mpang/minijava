@@ -82,6 +82,12 @@ public class ClassEntry extends DefaultIndentable {
     allFields.addAll(fields.keySet());
     return allFields.indexOf(fieldName);
   }
+  
+  public int getOffsetOfMethod(String methodName) {
+    // TODO proper method offset
+    List<String> methodNames = new ArrayList<String>(methods.keySet());
+    return methodNames.indexOf(methodName);
+  }
 
   @Override
   public void dump(IndentingWriter out) {

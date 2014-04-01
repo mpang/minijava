@@ -12,19 +12,24 @@ import ir.temp.Label;
 import ir.temp.Temp;
 import ir.tree.BINOP.Op;
 import ir.tree.CJUMP.RelOp;
+import ir.tree.IRData;
 import ir.tree.IRExp;
 import ir.tree.IRStm;
+import ir.tree.NAME;
 import ir.tree.TEMP;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import translate.DataFragment;
+import translate.Fragment;
 import translate.Fragments;
 import translate.ProcFragment;
 import typechecker.implementation.ClassEntry;
 import util.FunTable;
 import util.ImpTable;
 import util.List;
+import util.Utils;
 import visitor.Visitor;
 import ast.*;
 
@@ -177,7 +182,7 @@ public class TranslateVisitor implements Visitor<TRExp> {
 	  
 	  if (var == null) {
 	    int offset = currentClass.getOffsetOfField(n.name);
-	    return new Ex(MEM(PLUS(new This().accept(this).unEx(), offset * frame.wordSize())));
+	    return new Ex(MEM(PLUS(new This().accept(this).unEx(), (offset + 1) * frame.wordSize())));
 	  }
 	  
     return new Ex(var.exp(frame.FP()));
@@ -199,8 +204,8 @@ public class TranslateVisitor implements Visitor<TRExp> {
     currentClass = table.lookup(n.className);
     
     frags.add(new ProcFragment(mainFrame, mainFrame.procEntryExit1(n.statement.accept(this).unNx())));
-    envs.pop();
-    frames.pop();
+    //envs.pop();
+    //frames.pop();
     currentClass = null;
     return new Nx(NOP);
   }
@@ -208,9 +213,49 @@ public class TranslateVisitor implements Visitor<TRExp> {
   @Override
   public TRExp visit(ClassDecl n) {
     currentClass = table.lookup(n.name);
+    List<IRExp> methods = List.empty();
+    
+    // building superclass virtual method table
+    if (!n.superName.isEmpty()) {
+      for (Fragment fragment : frags) {
+        if (!(fragment instanceof DataFragment)) {
+          continue;
+        }
+        
+        IRData data = ((DataFragment) fragment).getBody();
+        if (data.getLabel().toString().equals(Label.get(n.superName).toString())) {
+          for (IRExp methodLabel : data) {
+            methods = methods.append(List.list(methodLabel));
+          }
+        }
+      }
+    }
+    
     for (MethodDecl method : n.methods) {
       method.accept(this);
+      IRExp methodExp = NAME(Label.get(n.name + "_" + method.name));
+      
+      if (!n.superName.isEmpty()) {
+        // try to find overriden methods, if any
+        boolean found = false;
+        for (IRExp exp : methods) {
+          String superMethodName = ((NAME) exp).label.toString().split("_")[Utils.macOS() ? 2 : 1];
+          if (superMethodName.equals(method.name)) {
+            methods = methods.replace(exp, methodExp);
+            found = true;
+            break;
+          }
+        }
+        // no overriden method for this one, just append it
+        if (!found) {
+          methods = methods.append(List.list(methodExp));
+        }
+      } else {
+        methods = methods.append(List.list(methodExp));
+      }
     }
+    
+    frags.add(new DataFragment(frames.peek(), DATA(Label.get(n.name), methods)));
     currentClass = null;
     return new Nx(NOP);
   }
@@ -323,8 +368,12 @@ public class TranslateVisitor implements Visitor<TRExp> {
       args.add(arg.accept(this).unEx());
     }
     
+    int methodOffset = table.lookup(n.receiver.getType().toString()).getOffsetOfMethod(n.name);
     return new Ex(new IfThenElse(new Ex(n.receiver.accept(this).unEx()),
-                                 new Ex(CALL(Label.get(n.receiver.getType().toString() + "_" + n.name),
+                                 //new Ex(CALL(Label.get(n.receiver.getType().toString() + "_" + n.name),
+                                 //            args)),
+                                 new Ex(CALL(MEM(PLUS(MEM(n.receiver.accept(this).unEx()),
+                                                      methodOffset * frames.peek().wordSize())),
                                              args)),
                                  new Ex(CALL(L_ERROR, NULL_OBJECT_REFERENCE))).unEx());
   }
@@ -337,12 +386,17 @@ public class TranslateVisitor implements Visitor<TRExp> {
   @Override
   public TRExp visit(NewObject n) {
     ClassEntry clazz = table.lookup(n.typeName);
-    int numBytes = 0;
+    int numBytes = frames.peek().wordSize();
     while (clazz != null) {
       numBytes += clazz.getNumOfFields() * frames.peek().wordSize();
       clazz = clazz.getSuperClass();
     }
-    return new Ex(CALL(L_NEW_OBJECT, CONST(numBytes)));
+    
+    //return new Ex(CALL(L_NEW_OBJECT, CONST(numBytes)));
+    Temp temp = new Temp();
+    return new Ex(ESEQ(SEQ(MOVE(temp, CALL(L_NEW_OBJECT, CONST(numBytes))),
+                           MOVE(MEM(TEMP(temp)), NAME(Label.get(n.typeName)))),
+                       TEMP(temp)));
   }
 
   @Override

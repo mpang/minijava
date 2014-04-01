@@ -107,7 +107,7 @@ public class TestTranslate {
 	}
 	
 	private boolean optionalSample(File f) {
-		return f.getName().equals("treevisitor.java");
+	  return false;
 	}
 	
 	protected Fragments test(String expected, String program) throws Exception {
