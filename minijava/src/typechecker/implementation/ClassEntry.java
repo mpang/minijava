@@ -1,6 +1,7 @@
 package typechecker.implementation;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -75,17 +76,29 @@ public class ClassEntry extends DefaultIndentable {
   public int getOffsetOfField(String fieldName) {
     List<String> allFields = new ArrayList<String>();
     ClassEntry superClass = this.superClass;
+    
     while (superClass != null) {
       allFields.addAll(0, superClass.getFields().keySet());
       superClass = superClass.superClass;
     }
+    
     allFields.addAll(fields.keySet());
     return allFields.indexOf(fieldName);
   }
   
   public int getOffsetOfMethod(String methodName) {
-    // TODO proper method offset
-    List<String> methodNames = new ArrayList<String>(methods.keySet());
+    List<String> methodNames = new ArrayList<String>();
+    ClassEntry superClass = this.superClass;
+    
+    while (superClass != null) {
+      methodNames.addAll(0, superClass.methods.keySet());
+      superClass = superClass.superClass;
+    }
+    
+    methodNames.addAll(methods.keySet());
+    if (this.superClass != null) {
+      methodNames = new ArrayList<String>(new LinkedHashSet<String>(methodNames));
+    }
     return methodNames.indexOf(methodName);
   }
 
