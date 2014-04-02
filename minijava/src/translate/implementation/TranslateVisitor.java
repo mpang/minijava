@@ -218,39 +218,36 @@ public class TranslateVisitor implements Visitor<TRExp> {
     // building superclass virtual method table
     if (!n.superName.isEmpty()) {
       for (Fragment fragment : frags) {
-        if (!(fragment instanceof DataFragment)) {
-          continue;
-        }
-        
-        IRData data = ((DataFragment) fragment).getBody();
-        if (data.getLabel().toString().equals(Label.get(n.superName).toString())) {
-          for (IRExp methodLabel : data) {
-            methods = methods.append(List.list(methodLabel));
+        if (fragment instanceof DataFragment) {
+          IRData data = ((DataFragment) fragment).getBody();
+          if (data.getLabel().toString().equals(Label.get(n.superName).toString())) {
+            for (IRExp methodLabel : data) {
+              methods = methods.append(List.list(methodLabel));
+            }
           }
         }
       }
     }
     
+    // add this class's methods
     for (MethodDecl method : n.methods) {
       method.accept(this);
       IRExp methodExp = NAME(Label.get(n.name + "_" + method.name));
+      boolean isOverriden = false;
       
       if (!n.superName.isEmpty()) {
         // try to find overriden methods, if any
-        boolean found = false;
         for (IRExp exp : methods) {
           String superMethodName = ((NAME) exp).label.toString().split("_")[Utils.macOS() ? 2 : 1];
           if (superMethodName.equals(method.name)) {
             methods = methods.replace(exp, methodExp);
-            found = true;
+            isOverriden = true;
             break;
           }
         }
-        // no overriden method for this one, just append it
-        if (!found) {
-          methods = methods.append(List.list(methodExp));
-        }
-      } else {
+      }
+      
+      if (!isOverriden) {
         methods = methods.append(List.list(methodExp));
       }
     }
