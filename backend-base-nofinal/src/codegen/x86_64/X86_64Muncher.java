@@ -326,26 +326,8 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
-    /*
-    sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, MEM(MINUS(_r_, CONST(_i_))), TEMP(_t_), CONST(_i2_))) {
-      @Override
-      protected Void trigger(Muncher m, Matched match) {
-        m.emit(A_CMP_FROM_MEM(m.munch(match.get(_l_)), -1 * match.get(_i_), m.munch(match.get(_r_))));
-        m.emit(A_CMOV(match.get(_relOp_), match.get(_t_), match.get(_i2_)));
-        return null;
-      }
-    });
+
     
-    sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, MEM(PLUS(_r_, CONST(_i_))), TEMP(_t_), CONST(_i2_))) {
-      @Override
-      protected Void trigger(Muncher m, Matched match) {
-        m.emit(A_CMP_FROM_MEM(m.munch(match.get(_l_)), match.get(_i_), m.munch(match.get(_r_))));
-        m.emit(A_CMOV(match.get(_relOp_), match.get(_t_), match.get(_i2_)));
-        return null;
-      }
-    });
-    */
-		
     // ############ expressions ############
     
     em.add(new MunchRule<IRExp, Temp>(AND(_l_, _r_)) {
@@ -597,46 +579,6 @@ public class X86_64Muncher extends Muncher {
     return new A_OPER(opCode + "    `s0, `d0", list(d), list(s, d));
   }
 
-  private static Instr A_CMOV(RelOp relOp, Temp d, int s) {
-    String opCode;
-    switch (relOp) {
-      case EQ:
-        opCode = "cmove ";
-        break;
-      case NE:
-        opCode = "cmovne";
-        break;
-      case GE:
-        opCode = "cmovge";
-        break;
-      case LT:
-        opCode = "cmovl";
-        break;
-      case LE:
-        opCode = "cmovle";
-        break;
-      case GT:
-        opCode = "cmovg";
-        break;
-      case ULT:
-        opCode = "cmovb";
-        break;
-      case UGT:
-        opCode = "cmova";
-        break;
-      case ULE:
-        opCode = "cmovbe";
-        break;
-      case UGE:
-        opCode = "cmovae";
-        break;
-      default:
-        throw new Error("Missing case?");
-    }
-
-    return new A_OPER(opCode + "    $" + s + ", `d0", list(d), noTemps);
-  }
-  
   private static Instr A_MOV_TO_MEM(int offset, Temp ptr, Temp src) {
     return new A_OPER("movq    `s1, " + offset + "(`s0)", noTemps, list(ptr, src));
   }
