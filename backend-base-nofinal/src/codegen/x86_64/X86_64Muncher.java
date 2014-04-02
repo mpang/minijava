@@ -326,7 +326,7 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
-    
+    /*
     sm.add(new MunchRule<IRStm, Void>(CMOVE(_relOp_, _l_, MEM(MINUS(_r_, CONST(_i_))), TEMP(_t_), CONST(_i2_))) {
       @Override
       protected Void trigger(Muncher m, Matched match) {
@@ -344,7 +344,7 @@ public class X86_64Muncher extends Muncher {
         return null;
       }
     });
-    
+    */
 		
     // ############ expressions ############
     
