@@ -53,13 +53,11 @@ public class IfThenElse extends TRExp {
 
   @Override
   public IRStm unCx(Label ifTrue, Label ifFalse) {
-    // TODO might need to implement it later, but there's no need for now
     return NOP;
   }
 
   @Override
   public IRStm unCx(IRExp dst, IRExp src) {
-    // TODO might need to implement it later, but there's no need for now
     return NOP;
   }
 
