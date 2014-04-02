@@ -171,30 +171,6 @@ void Instruction(Program p) : {
 	{ p.add(new CMovR2R("be", source, target)); }
 | 	< CMOVAE > source = Register() < COMMA > target = Register()
 	{ p.add(new CMovR2R("ae", source, target)); }
-
-
-| 	< CMOVL > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("l", source, target)); }
-| 	< CMOVE > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("e", source, target)); }
-| 	< CMOVG > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("g", source, target)); }
-| 	< CMOVLE > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("le", source, target)); }
-| 	< CMOVNE > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("ne", source, target)); }
-| 	< CMOVGE > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("ge", source, target)); }
-| 	< CMOVB > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("b", source, target)); }
-| 	< CMOVA > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("a", source, target)); }
-| 	< CMOVBE > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("be", source, target)); }
-| 	< CMOVAE > source = IntLit() < COMMA > target = Register()
-	{ p.add(new CMovI2R("ae", source, target)); }
-
-	
 |  	< CMP > source = IntLit() < COMMA > target = Register()
   	{ p.add(new CmpI2R(source, target)); }
 | 	< CMP > source = Register() < COMMA > target = Register()
