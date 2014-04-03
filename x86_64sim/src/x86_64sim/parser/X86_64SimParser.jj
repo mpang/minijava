@@ -92,7 +92,7 @@ TOKEN :
 {   	< INTEGER_LITERAL: ( "-" ) ? ( <DIGIT> )+ >
 | 	< REGISTER: "%r" ("ax" | "bx" | "cx" | "dx" | "si" | "di" | "sp" | "bp" | "8" | "9" | "10" | "11" | "12" | "13" | "14" | "15" ) | "t" (<DIGIT>)+ >
 | 	< RIP: "%rip" >
-|   < IDENTIFIER: ( <LETTER> | "_" ) (<LETTER> | "_" | "." | <DIGIT>)* >
+|   < IDENTIFIER: ( <LETTER> | "_" ) (<LETTER> | "_" | "." | "$" | <DIGIT>)* >
 | 	< STRING:  "\"" (~[ "\"", "\n" ])* "\"" >
 |   < #LETTER: ["A" - "Z", "a" - "z"] >
 |   < #DIGIT: ["0" - "9"] >
@@ -218,6 +218,8 @@ void Instruction(Program p) : {
   	{ if (index == null) p.add(new MoveM2R(offset, source, target)); else p.add(new MoveIM2R(offset, source, target, index, scale)); }
 | 	< MOV > source = Register() < COMMA > ( offset = Integer() )? < LPAREN > target = Register() ( < COMMA > index = Register() ( < COMMA > scale = Integer() )? )? < RPAREN >
 	{ if (index == null) p.add(new MoveR2M(offset, source, target)); else p.add(new MoveR2IM(offset, source, target, index, scale)); }
+|   < MOV > (source = IntLit()|source = IdLit()) < COMMA > ( offset = Integer() )? < LPAREN > target = Register() ( < COMMA > index = Register() ( < COMMA > scale = Integer() )? )? < RPAREN >
+	{ if (index == null) p.add(new MoveI2M(offset, source, target)); else p.add(new MoveI2IM(offset, source, target, index, scale)); }
 |  	< LEA > ( offset = Integer() )? < LPAREN > source= Register() ( < COMMA > index = Register() ( < COMMA > scale = Integer() )? )? < RPAREN > < COMMA > target = Register()
   	{ if (index == null) p.add(new Lea(offset, source, target)); else p.add(new Lea(offset, source, target, index, scale)); }
 |  	< LEA > ( offset = Identifier() )? < LPAREN > source= Rip() < RPAREN > < COMMA > target = Register()
