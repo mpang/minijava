@@ -23,6 +23,10 @@ class Suv extends Car {
     code = 2;
     return 0;
   }
+  
+  public int SuvCode() {
+    return 20;
+  }
 }
 
 class Limo extends Car {
@@ -36,6 +40,7 @@ class Main {
     Car car;
     Car suv;
     Car limo;
+    Suv realSuv;
     int temp;
 
     car = new Car();
@@ -49,7 +54,8 @@ class Main {
     temp = suv.PrintCode();
 
     if (suv instanceof Suv) {
-      System.out.println(3);
+      realSuv = (Suv) suv;
+      System.out.println(realSuv.SuvCode());
     } else {
       System.out.println(4);
     }
