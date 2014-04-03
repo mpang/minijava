@@ -432,4 +432,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
                            LABEL(join)),
                        result));
   }
+
+  @Override
+  public TRExp visit(TypeCoercion n) {
+    return new Ex(new IfThenElse(new InstanceOf(n.id, n.type).accept(this),
+                                 new IdentifierExp(n.id).accept(this),
+                                 new Ex(CALL(L_ERROR, INCOMPATIBLE_TYPE))).unEx());
+  }
 }

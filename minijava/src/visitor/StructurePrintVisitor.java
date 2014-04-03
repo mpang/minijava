@@ -316,4 +316,14 @@ public class StructurePrintVisitor implements Visitor<Void> {
     out.outdent();
     return null;
   }
+
+  @Override
+  public Void visit(TypeCoercion n) {
+    out.println("TypeCoercion");
+    out.indent();
+    new ObjectType(n.type).accept(this);
+    new IdentifierExp(n.id).accept(this);
+    out.outdent();
+    return null;
+  }
 }

@@ -331,10 +331,17 @@ Expression MultExpression() : {
   { return e1; }}
 
 Expression NotExpression() : {
+  Token t, t2;
   Expression e;}{
   < NOT >
   e = NotExpression()
-  { return new Not(e); }| e = PrimaryExpression()  { return e; }}
+  { return new Not(e); }
+| LOOKAHEAD(4)
+  < LPAREN >
+  t = < IDENTIFIER >
+  < RPAREN >
+  t2 = < IDENTIFIER >
+  { return new TypeCoercion(t.image, t2.image); }| e = PrimaryExpression()  { return e; }}
 
 Expression PrimaryExpression() : {
   Expression e;
@@ -364,7 +371,7 @@ Expression PrimaryExpression() : {
   { return e; }}
 
 Expression ElementaryExpression() : {
-  Token t;
+  Token t, t2;
   Expression e;}
 {
   < NEW >
@@ -378,11 +385,10 @@ Expression ElementaryExpression() : {
   	{ return new NewArray(e); }
   )| t = < INTEGER_LITERAL >  { return new IntegerLiteral(t.image); }| t = < BOOLEAN_LITERAL >
   { return new BooleanLiteral(t.image); }
-| t = < IDENTIFIER >  { return new IdentifierExp(t.image); }| < THIS >  { return new This(); }
-| < LPAREN >
+| t = < IDENTIFIER >  { return new IdentifierExp(t.image); }| < THIS >  { return new This(); }| < LPAREN >
   e = Expression()
-  < RPAREN >  { return e; }
-}
+  < RPAREN >
+  { return e; }}
 
 /**
   * Identifier

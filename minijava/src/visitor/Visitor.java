@@ -55,4 +55,5 @@ public interface Visitor<R> {
 	public R visit(NewObject n);
 	public R visit(This n);
 	public R visit(InstanceOf n);
+	public R visit(TypeCoercion n);
 }

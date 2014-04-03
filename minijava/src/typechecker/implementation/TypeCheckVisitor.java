@@ -339,7 +339,7 @@ public class TypeCheckVisitor implements Visitor<Type> {
   @Override
   public Type visit(InstanceOf n) {
     // check identifier is of object type
-    Expression id = new IdentifierExp(n.identifier);
+    IdentifierExp id = new IdentifierExp(n.identifier);
     Type idType = id.accept(this);
     if (!(idType instanceof ObjectType)) {
       errors.typeError(id, new ObjectType("object"), idType);
@@ -351,6 +351,22 @@ public class TypeCheckVisitor implements Visitor<Type> {
     }
     
     n.setType(new BooleanType());
+    return n.getType();
+  }
+
+  @Override
+  public Type visit(TypeCoercion n) {
+    IdentifierExp id = new IdentifierExp(n.id);
+    Type idType = id.accept(this);
+    if (!(idType instanceof ObjectType)) {
+      errors.typeError(id, new ObjectType("object"), idType);
+    }
+    
+    if (!symbolTable.containsKey(n.type)) {
+      errors.undefinedId(n.type);
+    }
+    
+    n.setType(new ObjectType(n.type));
     return n.getType();
   }
 }
