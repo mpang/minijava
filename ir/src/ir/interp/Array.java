@@ -87,11 +87,20 @@ public class Array extends Ptr {
 	 * Implements the EQ binop, but only if the other word is an int.  This is necessary for checking for NULL.
 	 */
 	public boolean isEQ(Word r) {
+	  /*
 		if (r.asInt() == 0) {
 			return false;
 		} else {
 			throw new Error("EQ on "+this+" only works to compare to 0, not "+r);
 		}
+		*/
+	  if (r instanceof Int && r.asInt() == 0) {
+	    return false;
+	  } else if (r instanceof Array) {
+	    return this == r;
+	  } else {
+	    throw new Error("EQ on "+this+" only works to compare to 0, not "+r);
+	  }
 	}
 
 	public void fill(Word with) {
