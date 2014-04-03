@@ -335,4 +335,22 @@ public class TypeCheckVisitor implements Visitor<Type> {
     n.setType(new ObjectType(currentClass.className));
     return n.getType();
   }
+
+  @Override
+  public Type visit(InstanceOf n) {
+    // check identifier is of object type
+    Expression id = new IdentifierExp(n.identifier);
+    Type idType = id.accept(this);
+    if (!(idType instanceof ObjectType)) {
+      errors.typeError(id, new ObjectType("object"), idType);
+    }
+    
+    // check class is defined
+    if (!symbolTable.containsKey(n.className)) {
+      errors.undefinedId(n.className);
+    }
+    
+    n.setType(new BooleanType());
+    return n.getType();
+  }
 }

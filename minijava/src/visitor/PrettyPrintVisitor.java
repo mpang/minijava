@@ -318,4 +318,10 @@ public class PrettyPrintVisitor implements Visitor<Void> {
     out.print("this");
     return null;
   }
+
+  @Override
+  public Void visit(InstanceOf n) {
+    out.print(n.identifier + " instanceof " + n.className);
+    return null;
+  }
 }

@@ -20,6 +20,7 @@ import ir.tree.TEMP;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Iterator;
 
 import translate.DataFragment;
 import translate.Fragment;
@@ -61,6 +62,8 @@ public class TranslateVisitor implements Visitor<TRExp> {
 
 	private ImpTable<ClassEntry> table; 
 	private ClassEntry currentClass;
+	
+	private static final String OBJECT_CLASS = "Object";
 
 	public TranslateVisitor(ImpTable<ClassEntry> table, Frame frameFactory) {
 		frags = new Fragments(frameFactory);
@@ -200,12 +203,11 @@ public class TranslateVisitor implements Visitor<TRExp> {
   public TRExp visit(MainClass n) {
   	Frame mainFrame = newFrame(L_MAIN, 1);
     frames.push(mainFrame);
-    envs.push(FunTable.<Access>theEmpty());
     currentClass = table.lookup(n.className);
     
+    frags.add(new DataFragment(mainFrame, DATA(Label.get(OBJECT_CLASS), List.list(CONST(0)))));
     frags.add(new ProcFragment(mainFrame, mainFrame.procEntryExit1(n.statement.accept(this).unNx())));
-    //envs.pop();
-    //frames.pop();
+    
     currentClass = null;
     return new Nx(NOP);
   }
@@ -213,16 +215,20 @@ public class TranslateVisitor implements Visitor<TRExp> {
   @Override
   public TRExp visit(ClassDecl n) {
     currentClass = table.lookup(n.name);
-    List<IRExp> methods = List.empty();
+    // add superclass label
+    List<IRExp> methods = List.list(NAME(Label.get(n.superName.isEmpty() ? OBJECT_CLASS : n.superName)));
     
     // building superclass virtual method table
     if (!n.superName.isEmpty()) {
       for (Fragment fragment : frags) {
         if (fragment instanceof DataFragment) {
           IRData data = ((DataFragment) fragment).getBody();
+          
           if (data.getLabel().toString().equals(Label.get(n.superName).toString())) {
-            for (IRExp methodLabel : data) {
-              methods = methods.append(List.list(methodLabel));
+            Iterator<IRExp> iterator = data.iterator();
+            iterator.next();  // ignore superclass's superclass label
+            while (iterator.hasNext()) {
+              methods = methods.append(List.list(iterator.next()));
             }
           }
         }
@@ -237,7 +243,8 @@ public class TranslateVisitor implements Visitor<TRExp> {
       
       if (!n.superName.isEmpty()) {
         // try to find overriden methods, if any
-        for (IRExp exp : methods) {
+        // start from tail to ignore superclass's superclass label
+        for (IRExp exp : methods.tail()) {
           String superMethodName = ((NAME) exp).label.toString().split("_")[Utils.macOS() ? 2 : 1];
           if (superMethodName.equals(method.name)) {
             methods = methods.replace(exp, methodExp);
@@ -365,10 +372,9 @@ public class TranslateVisitor implements Visitor<TRExp> {
       args.add(arg.accept(this).unEx());
     }
     
-    int methodOffset = table.lookup(n.receiver.getType().toString()).getOffsetOfMethod(n.name);
+    // + 1 to ignore the superclass label
+    int methodOffset = table.lookup(n.receiver.getType().toString()).getOffsetOfMethod(n.name) + 1;
     return new Ex(new IfThenElse(new Ex(n.receiver.accept(this).unEx()),
-                                 //new Ex(CALL(Label.get(n.receiver.getType().toString() + "_" + n.name),
-                                 //            args)),
                                  new Ex(CALL(MEM(PLUS(MEM(n.receiver.accept(this).unEx()),
                                                       methodOffset * frames.peek().wordSize())),
                                              args)),
@@ -389,7 +395,6 @@ public class TranslateVisitor implements Visitor<TRExp> {
       clazz = clazz.getSuperClass();
     }
     
-    //return new Ex(CALL(L_NEW_OBJECT, CONST(numBytes)));
     Temp temp = new Temp();
     return new Ex(ESEQ(SEQ(MOVE(temp, CALL(L_NEW_OBJECT, CONST(numBytes))),
                            MOVE(MEM(TEMP(temp)), NAME(Label.get(n.typeName)))),
@@ -400,5 +405,31 @@ public class TranslateVisitor implements Visitor<TRExp> {
   public TRExp visit(This n) {
     Frame frame = frames.peek();
     return new Ex(frame.getFormal(0).exp(frame.FP()));
+  }
+
+  @Override
+  public TRExp visit(InstanceOf n) {
+    IdentifierExp id = new IdentifierExp(n.identifier);
+    Label t = Label.gen();
+    Label f = Label.gen();
+    Label body = Label.gen();
+    Label test = Label.gen();
+    Label join = Label.gen();
+    TEMP classLabel = TEMP(new Temp());
+    TEMP result = TEMP(new Temp());
+    
+    return new Ex(ESEQ(SEQ(MOVE(classLabel, MEM(id.accept(this).unEx())),
+                           LABEL(test),
+                           CJUMP(RelOp.EQ, classLabel, NAME(Label.get(n.className)), t, body),
+                           LABEL(body),
+                           MOVE(classLabel, MEM(classLabel)),
+                           CJUMP(RelOp.EQ, classLabel, CONST(0), f, test),
+                           LABEL(t),
+                           MOVE(result, TRUE),
+                           JUMP(join),
+                           LABEL(f),
+                           MOVE(result, FALSE),
+                           LABEL(join)),
+                       result));
   }
 }

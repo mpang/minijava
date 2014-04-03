@@ -69,6 +69,7 @@ TOKEN : /* SEPARATORS and OPERATORS*/
 | < LBRACKET: "[" >
 | < RBRACKET: "]" >
 | < LENGTH: ".length" >
+| < INSTANCEOF: "instanceof" >
 }
 	
 TOKEN :	/* LITERALS */
@@ -299,8 +300,14 @@ Expression Expression() : {
   { return e1; }}
 
 Expression CompareExpression() : {
-  Expression e1, e2;}{
-  e1 = AddExpression()
+  Expression e1, e2;
+  String id, className;}{
+  LOOKAHEAD(2)
+  id = Identifier()
+  < INSTANCEOF >
+  className = Identifier()
+  { return new InstanceOf(id, className); }
+| e1 = AddExpression()
   (    < LESS >
     e2 = AddExpression()
     { e1 = new LessThan(e1, e2); }

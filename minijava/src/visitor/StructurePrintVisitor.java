@@ -306,4 +306,14 @@ public class StructurePrintVisitor implements Visitor<Void> {
     out.println("This");
     return null;
   }
+
+  @Override
+  public Void visit(InstanceOf n) {
+    out.println("InstanceOf");
+    out.indent();
+    new IdentifierExp(n.identifier).accept(this);
+    new ObjectType(n.className).accept(this);
+    out.outdent();
+    return null;
+  }
 }
