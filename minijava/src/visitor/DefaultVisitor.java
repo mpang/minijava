@@ -196,4 +196,9 @@ public class DefaultVisitor<R> implements Visitor<R> {
   public R visit(TypeCoercion n) {
     throw new Error("Not implemented");
   }
+
+  @Override
+  public R visit(Super n) {
+    throw new Error("Not implemented");
+  }
 }

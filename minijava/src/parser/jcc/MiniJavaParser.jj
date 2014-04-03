@@ -40,6 +40,7 @@ TOKEN : /* KEYWORDS */
 | < ELSE: "else" >
 | < WHILE: "while" >
 | < THIS: "this" >
+| < SUPER: "super" >
 | < NEW: "new" >
 | < PRINT: "System.out.println" >
 | < INT: "int" >
@@ -385,7 +386,9 @@ Expression ElementaryExpression() : {
   	{ return new NewArray(e); }
   )| t = < INTEGER_LITERAL >  { return new IntegerLiteral(t.image); }| t = < BOOLEAN_LITERAL >
   { return new BooleanLiteral(t.image); }
-| t = < IDENTIFIER >  { return new IdentifierExp(t.image); }| < THIS >  { return new This(); }| < LPAREN >
+| t = < IDENTIFIER >  { return new IdentifierExp(t.image); }| < THIS >  { return new This(); }
+| < SUPER >
+  { return new Super(); }| < LPAREN >
   e = Expression()
   < RPAREN >
   { return e; }}

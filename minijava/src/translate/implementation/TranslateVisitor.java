@@ -374,8 +374,12 @@ public class TranslateVisitor implements Visitor<TRExp> {
     
     // + 1 to ignore the superclass label
     int methodOffset = table.lookup(n.receiver.getType().toString()).getOffsetOfMethod(n.name) + 1;
+    // there should be an uniform way of dealing with this and super in terms of method address
+    // but this will do for now
+    IRExp vmt = (n.receiver instanceof Super) ? MEM(n.receiver.accept(this).unEx())
+                                              : n.receiver.accept(this).unEx();
     return new Ex(new IfThenElse(new Ex(n.receiver.accept(this).unEx()),
-                                 new Ex(CALL(MEM(PLUS(MEM(n.receiver.accept(this).unEx()),
+                                 new Ex(CALL(MEM(PLUS(MEM(vmt),
                                                       methodOffset * frames.peek().wordSize())),
                                              args)),
                                  new Ex(CALL(L_ERROR, NULL_OBJECT_REFERENCE))).unEx());
@@ -438,5 +442,10 @@ public class TranslateVisitor implements Visitor<TRExp> {
     return new Ex(new IfThenElse(new InstanceOf(n.id, n.type).accept(this),
                                  new IdentifierExp(n.id).accept(this),
                                  new Ex(CALL(L_ERROR, INCOMPATIBLE_TYPE))).unEx());
+  }
+
+  @Override
+  public TRExp visit(Super n) {
+    return new This().accept(this);
   }
 }

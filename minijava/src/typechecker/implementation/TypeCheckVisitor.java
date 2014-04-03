@@ -369,4 +369,10 @@ public class TypeCheckVisitor implements Visitor<Type> {
     n.setType(new ObjectType(n.type));
     return n.getType();
   }
+
+  @Override
+  public Type visit(Super n) {
+    n.setType(new ObjectType(currentClass.getSuperClass().className));
+    return n.getType();
+  }
 }

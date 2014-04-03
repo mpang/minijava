@@ -330,4 +330,10 @@ public class PrettyPrintVisitor implements Visitor<Void> {
     out.print("(" + n.type + ")" + n.id);
     return null;
   }
+
+  @Override
+  public Void visit(Super n) {
+    out.print("super");
+    return null;
+  }
 }

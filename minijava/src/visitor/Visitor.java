@@ -54,6 +54,7 @@ public interface Visitor<R> {
 	public R visit(NewArray n);
 	public R visit(NewObject n);
 	public R visit(This n);
+	public R visit(Super n);
 	public R visit(InstanceOf n);
 	public R visit(TypeCoercion n);
 }

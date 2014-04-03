@@ -326,4 +326,10 @@ public class StructurePrintVisitor implements Visitor<Void> {
     out.outdent();
     return null;
   }
+
+  @Override
+  public Void visit(Super n) {
+    out.println("Super");
+    return null;
+  }
 }
