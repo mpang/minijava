@@ -28,6 +28,7 @@ public class IR {
 	
 	public static final IRExp INDEX_OUT_OF_BOUND = CONST(1);
 	public static final IRExp NULL_OBJECT_REFERENCE = CONST(2);
+	public static final IRExp INCOMPATIBLE_TYPE = CONST(3);
 
 	public static IRExp BINOP(Op op, IRExp l, IRExp r) {
 		BINOP result = new BINOP(op, l, r);
