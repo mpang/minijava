@@ -399,10 +399,10 @@ public class TranslateVisitor implements Visitor<TRExp> {
       clazz = clazz.getSuperClass();
     }
     
-    Temp temp = new Temp();
+    TEMP temp = TEMP(new Temp());
     return new Ex(ESEQ(SEQ(MOVE(temp, CALL(L_NEW_OBJECT, CONST(numBytes))),
-                           MOVE(MEM(TEMP(temp)), NAME(Label.get(n.typeName)))),
-                       TEMP(temp)));
+                           MOVE(MEM(temp), NAME(Label.get(n.typeName)))),
+                       temp));
   }
 
   @Override
