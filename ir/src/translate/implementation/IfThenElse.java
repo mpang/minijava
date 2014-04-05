@@ -11,6 +11,7 @@ import ir.temp.Label;
 import ir.temp.Temp;
 import ir.tree.IRExp;
 import ir.tree.IRStm;
+import ir.tree.TEMP;
 
 public class IfThenElse extends TRExp {
   
@@ -29,7 +30,7 @@ public class IfThenElse extends TRExp {
 
   @Override
   public IRExp unEx() {
-    Temp temp = new Temp();
+    TEMP temp = TEMP(new Temp());
     return ESEQ(SEQ(test.unCx(t, f),
                     LABEL(t),
                     MOVE(temp, thn.unEx()),
@@ -37,7 +38,7 @@ public class IfThenElse extends TRExp {
                     LABEL(f),
                     MOVE(temp, els.unEx()),
                     LABEL(join)),
-                TEMP(temp));
+                temp);
   }
 
   @Override
