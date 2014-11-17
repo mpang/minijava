@@ -1,9 +1,0 @@
-x = 1;
-int test() {
-a = 1;
-b = 2;
-x = a < b ? 3 : 4;
-return x;
-}
-y = test();
-print x + y

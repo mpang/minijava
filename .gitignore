@@ -1,0 +1,7 @@
+.DS_Store
+*.o
+*.exe
+*.s
+minijava/src/parser/jcc/*.java
+minijava/src/x86_64sim/parser/*.java
+minijava/bin/

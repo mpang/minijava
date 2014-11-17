@@ -3,10 +3,9 @@ package driver;
 import java.io.File;
 
 import parser.Parser;
+import typechecker.implementation.TypeCheckerImplementation;
 
 import ast.Program;
-
-import typechecker.implementation.TypeCheckerImplementation;
 
 public class DTypeChecker {
 

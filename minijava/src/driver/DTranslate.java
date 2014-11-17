@@ -7,6 +7,7 @@ import ir.interp.InterpMode;
 
 import java.io.File;
 
+
 import translate.Fragments;
 import translate.Translator;
 
@@ -15,7 +16,8 @@ public class DTranslate {
 	public static final Frame architecture = X86_64Frame.factory;
 	
 	protected static InterpMode getSimulationMode() {
-		return InterpMode.BASIC_BLOCKS;
+		return InterpMode.LINEARIZED_IR;
+//		return InterpMode.BASIC_BLOCKS;
 	}
 
 	/**

@@ -1,7 +1,0 @@
-Parsing:
-
-Type-checking:
-- test against broken programs
-
-Translation:
-- dynamic method dispatch (optional)
